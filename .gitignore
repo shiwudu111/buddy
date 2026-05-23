@@ -1,0 +1,11 @@
+# 父级工作区只管理协调文件和统一文档。
+/buddy-client/
+/buddy-server/
+
+# 本地临时与日志文件。
+/.tmp/
+*.log
+
+# 编辑器与系统噪声。
+.DS_Store
+Thumbs.db

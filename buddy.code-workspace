@@ -1,0 +1,22 @@
+﻿{
+  "folders": [
+    {
+      "name": "workspace",
+      "path": "."
+    },
+    {
+      "name": "buddy-client",
+      "path": "buddy-client"
+    },
+    {
+      "name": "buddy-server",
+      "path": "buddy-server"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.git": true
+    }
+  }
+}
