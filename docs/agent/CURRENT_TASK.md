@@ -2,52 +2,50 @@
 
 ## 任务名
 
-Buddy Agent 架构文档收口任务。
+Main 日记事件闭环收口任务。
 
 ## 目标
 
-- 标记 Agent 架构文档任务完成。
-- 将 agent 文档任务与 Main 日记事件闭环遗留改动彻底分开。
-- 准备一个只包含 agent 架构文档的 root commit。
-- 不修改 `buddy-client/` 或 `buddy-server/` 业务代码。
+- 让后端 `dashboard.recent_events` 返回最近 5 条真实事件。
+- 让客户端 Main 日记预览优先消费 dashboard `recent_events`。
+- 保留打开日记页后通过 `/pets/:petId/events` 刷新完整事件列表的能力。
+- 补齐 root diary 契约文档并通过 Review/Test Gate。
 
 ## 允许文件
 
-- `AGENTS.md`
-- `PLAN.md`
-- `docs/agent/STATE.md`
-- `docs/agent/CURRENT_TASK.md`
-- `docs/agent/DECISIONS.md`
-- `docs/agent/HANDOFF.md`
-- `docs/agent/CHECKLISTS.md`
-- `docs/agent/SUBAGENTS.md`
+- root：`PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/HANDOFF.md`、`docs/contracts/README.md`、`docs/contracts/diary.md`
+- server：`src/routes/pet.ts`、`tests/api.test.ts`
+- client：`assets/scripts/services/PetService.ts`
 
 ## 不做事项
 
-- 不改 `buddy-client/` 业务代码。
-- 不改 `buddy-server/` 业务代码。
+- 不新增数据库表。
+- 不做 Prisma migration。
+- 不改变认证方式。
 - 不提交 `buddy-client/.tmp/`。
-- 不提交 `docs/contracts/diary.md`。
-- 不提交 Main 日记事件闭环相关文件。
-- 不运行破坏性 `reset` / `revert`。
+- 不扩展新的日记编辑、筛选、分页 UI。
+- 不改无关 Main 面板或无关 server 路由。
 
 ## 当前阶段
 
-Agent 架构文档已完成，处于 commit 前用户确认阶段。
+恢复任务并进入 Contract/Review 准备阶段。
 
-## 本轮完成
-
-- `PLAN.md` 已标记 Agent 架构文档任务完成。
-- `CURRENT_TASK.md` 已切换为本轮收口状态。
-- `HANDOFF.md` 已记录本轮完成内容、未提交遗留和下一轮恢复顺序。
-- agent 架构文档与 Main 日记事件闭环遗留文件已明确分离。
-
-## 明确属于下一轮的遗留
+## 当前已知遗留
 
 - root：`docs/contracts/README.md`、`docs/contracts/diary.md`
 - client：`assets/scripts/services/PetService.ts`、未跟踪 `.tmp/`
 - server：`src/routes/pet.ts`、`tests/api.test.ts`
 
+## 验证命令
+
+- server：在 `buddy-server/` 运行 `bun test`
+- client：在 `buddy-client/` 运行 `bunx tsc --noEmit --ignoreDeprecations 6.0`
+- review：分别检查 root / client / server `git status -sb`，确认 `.tmp/` 不进入提交。
+
 ## 下一步
 
-等待用户确认 git add 文件清单。确认后只暂存 agent 架构文档文件，不暂存 contracts、client、server 或 `.tmp/`。
+1. 复核 diary contract 与 server/client 字段一致。
+2. 如需修正，只在允许文件内做最小补丁。
+3. 同步 server WSL runtime 后运行 `bun test`。
+4. 运行 client TypeScript 检查。
+5. 通过后准备分仓提交，但提交前先汇报给用户确认。

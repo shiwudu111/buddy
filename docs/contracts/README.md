@@ -25,3 +25,4 @@
 - `auth.md`
 - `pet.md`
 - `homework.md`
+- `diary.md`

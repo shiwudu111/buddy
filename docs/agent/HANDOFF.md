@@ -2,6 +2,42 @@
 
 ## 最近交接
 
+### 2026-05-26 - 恢复 Main 日记事件闭环收口任务
+
+触发原因：
+
+- Agent 架构文档已完成 root commit，用户要求进入第二步：恢复 Main 日记事件闭环任务。
+
+本轮已做：
+
+- 复核 root / client / server `git status -sb`。
+- 复核 root `git diff --stat`。
+- 读取 diary contract、client `PetService.ts` diff、server `pet.ts` / `api.test.ts` diff。
+- 更新 `PLAN.md`，切换当前任务为 Main 日记事件闭环收口。
+- 更新 `docs/agent/CURRENT_TASK.md`，记录允许文件、验证命令和下一步。
+
+当前遗留范围：
+
+- root：`docs/contracts/README.md`、`docs/contracts/diary.md`
+- client：`assets/scripts/services/PetService.ts`、未跟踪 `.tmp/`
+- server：`src/routes/pet.ts`、`tests/api.test.ts`
+
+下一步建议：
+
+1. 复核 diary contract 与 server/client 字段一致。
+2. 如需修正，只在允许文件内做最小补丁。
+3. 同步 server WSL runtime 后运行 `bun test`。
+4. 运行 client `bunx tsc --noEmit --ignoreDeprecations 6.0`。
+5. Review Gate 通过后，等待用户确认再按 server -> client -> root 分仓提交。
+
+验证进展：
+
+- server WSL sync / Prisma generate / backend restart / health check 已通过。
+- `buddy-server` 已运行 `bun test`：57 pass / 0 fail / 218 expect() calls。
+- `buddy-client` 已运行 `bunx tsc --noEmit --ignoreDeprecations 6.0`：通过，无错误输出。
+- `buddy-client/.tmp/` 仍未跟踪，提交时必须继续排除。
+- `MainController.ts` 中日记同步失败文案仍可后续优化为“当前显示最近记录”，但该文件不在本轮允许文件内，本轮未修改。
+
 ### 2026-05-26 - Buddy Agent 架构文档收口
 
 触发原因：
