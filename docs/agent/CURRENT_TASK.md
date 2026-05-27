@@ -2,50 +2,39 @@
 
 ## 任务名
 
-Main 日记事件闭环收口任务。
+Release/Sync 工具收口验证
 
 ## 目标
 
-- 让后端 `dashboard.recent_events` 返回最近 5 条真实事件。
-- 让客户端 Main 日记预览优先消费 dashboard `recent_events`。
-- 保留打开日记页后通过 `/pets/:petId/events` 刷新完整事件列表的能力。
-- 补齐 root diary 契约文档并通过 Review/Test Gate。
+- 将常用的 status / push / WSL sync / post-sync check 固化为 root CLI。
+- 复用 `buddy-client/tools/sync-windows-to-wsl.sh` 与 `buddy-server/tools/sync-windows-to-wsl.sh`，不复制同步逻辑。
+- 明确 `E:\buddy\buddy-client` 与 `E:\buddy\buddy-server` 是正式路径，旧 `E:\buddy-client` / `E:\buddy-server` 仅作为备份。
+- 记录 `.git` 仍指向旧备份目录的路径风险。
+- 通过全链路命令验证工具是否可以收口。
 
 ## 允许文件
 
-- root：`PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/HANDOFF.md`、`docs/contracts/README.md`、`docs/contracts/diary.md`
-- server：`src/routes/pet.ts`、`tests/api.test.ts`
-- client：`assets/scripts/services/PetService.ts`
+- `tools/release-sync.mjs`
+- `PLAN.md`
+- `docs/agent/CURRENT_TASK.md`
+- `docs/agent/HANDOFF.md`
 
 ## 不做事项
 
-- 不新增数据库表。
-- 不做 Prisma migration。
-- 不改变认证方式。
-- 不提交 `buddy-client/.tmp/`。
-- 不扩展新的日记编辑、筛选、分页 UI。
-- 不改无关 Main 面板或无关 server 路由。
+- 不修改 `buddy-client/` 业务代码。
+- 不修改 `buddy-server/` 业务代码。
+- 不迁移 `.git` 元数据。
+- 不删除旧备份目录。
+- 不运行破坏性 `reset` / `revert`。
+
+## 验证方式
+
+- `node tools/release-sync.mjs --help`
+- `node tools/release-sync.mjs --repo client --status`
+- `node tools/release-sync.mjs --repo server --status`
+- `node tools/release-sync.mjs --repo client --sync --check`
+- `node tools/release-sync.mjs --repo server --check`
 
 ## 当前阶段
 
-恢复任务并进入 Contract/Review 准备阶段。
-
-## 当前已知遗留
-
-- root：`docs/contracts/README.md`、`docs/contracts/diary.md`
-- client：`assets/scripts/services/PetService.ts`、未跟踪 `.tmp/`
-- server：`src/routes/pet.ts`、`tests/api.test.ts`
-
-## 验证命令
-
-- server：在 `buddy-server/` 运行 `bun test`
-- client：在 `buddy-client/` 运行 `bunx tsc --noEmit --ignoreDeprecations 6.0`
-- review：分别检查 root / client / server `git status -sb`，确认 `.tmp/` 不进入提交。
-
-## 下一步
-
-1. 复核 diary contract 与 server/client 字段一致。
-2. 如需修正，只在允许文件内做最小补丁。
-3. 同步 server WSL runtime 后运行 `bun test`。
-4. 运行 client TypeScript 检查。
-5. 通过后准备分仓提交，但提交前先汇报给用户确认。
+风险已记录，工具已修正为正式路径；正在进行全链路验证。
