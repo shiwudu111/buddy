@@ -375,3 +375,371 @@ Smoke test 结果：
 1. 先运行 Review/Test Mode 的状态清单。
 2. 决定是否继续 Main 日记事件闭环。
 3. 若继续，先重建 Task Packet，再修 server 测试失败。
+# 2026-05-27 - 后续开发待办清单收口
+
+触发原因：
+
+- 用户要求“做一个待办清单，将任务列好，按顺序执行”。
+- 当前主链路 API/service 已贯通，下一阶段需要避免散点推进，先把后续工作排成稳定队列。
+
+本轮已完成：
+
+- 执行 root / client / server `git status -sb`，三仓库开始时均 clean。
+- 检查 `PLAN.md` 和 `docs/agent/CURRENT_TASK.md`，发现仍停留在旧 release-sync 任务，且存在乱码显示问题。
+- 重建 `PLAN.md`，将当前任务切换为“后续开发待办清单与执行顺序收口”。
+- 重建 `docs/agent/CURRENT_TASK.md`，明确下一轮从 `MVP Cocos UI 真实点击验收` 开始。
+- 梳理后续 7 项待办顺序：
+  1. MVP Cocos UI 真实点击验收。
+  2. MVP 缺口清单与修复顺序。
+  3. UI 主链路收口。
+  4. Contract 补齐与文档去重。
+  5. 自动化验收增强。
+  6. 家长侧与学习闭环 MVP。
+  7. 产品体验与宠物生命感。
+
+本轮未做：
+
+- 未修改 `buddy-client/` 业务代码。
+- 未修改 `buddy-server/` 业务代码。
+- 未提交、未推送。
+- 未运行 WSL 同步。
+- 未进入新功能实现。
+
+下一轮建议：
+
+1. 重新执行 State Refresh。
+2. 启动任务 `MVP Cocos UI 真实点击验收`。
+3. 读取 `docs/client/07-联调与测试/mvp-client-click-smoke-checklist.md`。
+4. 按真实 Cocos UI 路径记录通过项、阻塞项和缺口。
+5. 根据验收结果生成第 2 项 `MVP 缺口清单与修复顺序`。
+
+风险记录：
+
+- `PLAN.md` / `CURRENT_TASK.md` 曾被旧任务和乱码污染，后续每轮必须先核对当前任务是否唯一。
+- Windows 是研发修改区，WSL 是最终运行维护和 smoke 验证区。
+- 任一步骤超过 5 分钟无用户可见更新，即视为流程失败，需要先复盘流程。
+
+# 2026-05-27 - MVP Cocos UI 真实点击验收启动
+
+触发原因：
+
+- 用户要求“按待办顺序执行任务”，因此从第 1 项 `MVP Cocos UI 真实点击验收` 开始。
+
+本轮已完成：
+
+- 执行 root / client / server `git status -sb`。
+- 确认 client/server 均 clean；root 有上一轮规划文档改动，作为当前任务依据继续保留。
+- 读取 Cocos 点击验收清单，发现原文存在乱码，已重建为可读中文。
+- 确认 Cocos Creator 可执行文件存在：`C:\ProgramData\cocos\editors\Creator\3.8.7\CocosCreator.exe`。
+- 确认正确工程路径仍是：`E:\buddy\buddy-client`。
+- 运行 server health check：通过，返回 `{"status":"ok","message":"Buddy API Server"}`。
+- 运行 client TypeScript：通过。
+- 运行 WSL MVP smoke：通过，覆盖 child register/login、create pet、dashboard、homework reward、inventory use、diary events、chat、parent bind/view/report。
+- 更新 `PLAN.md`，将第 1 项标记为自动基线已完成，并补充第 2 项缺口清单初稿。
+- 更新 `docs/agent/CURRENT_TASK.md`，当前任务切换为 `MVP Cocos UI 真实点击验收`。
+- 更新 `docs/client/07-联调与测试/mvp-client-click-smoke-checklist.md`，记录自动基线和 9 步真实点击模板。
+
+当前结论：
+
+- MVP API/service 主链路健康。
+- Cocos 工程路径和 Creator 路径具备人工验收条件。
+- 真实 Cocos UI 点击尚未完成，因为 Codex 当前不能直接观察和操作 Cocos 原生窗口。
+
+下一步：
+
+1. 用户按 `docs/client/07-联调与测试/mvp-client-click-smoke-checklist.md` 执行 9 步真实点击，并反馈通过/失败/截图/日志。
+2. 根据真实点击结果定稿第 2 项 `MVP 缺口清单与修复顺序`。
+3. 若用户提供 Web build 或 preview 自动化入口，Codex 可继续尝试自动点击验收。
+
+风险记录：
+
+- 不应把 API smoke 通过误判为 UI 点击已通过。
+- Windows 是研发区，WSL 是最终运行和 smoke 验证区。
+- WSL 仍可能输出 networking 噪声；只要退出码为 0 且 health/smoke 通过，不作为当前阻塞。
+
+# 2026-05-28 - MVP 真实点击验收结果与缺口定稿
+
+触发原因：
+
+- 用户完成 Cocos 手动验收并提供接口/页面结果。
+
+本轮已记录：
+
+- 第 1 步登录/注册：通过。学生新账号注册登录成功。
+- 第 2 步创建或进入宠物主页：通过。
+- 第 3 步 dashboard 刷新：通过。
+- 第 4 步提交作业获得奖励：通过。数学作业提交成功，获得 `logic_cookie`。
+- 第 5 步背包显示奖励：通过。作业响应中 `foods` 与 `inventory` 均包含奖励。
+- 第 6 步使用背包物品：通过。逻辑饼干与基础口粮使用均返回成功，并产生 `inventory_food_use` 日志。
+- 第 7 步日记显示事件：通过。`/events?limit=100` 返回 feed、reward、homework 事件。
+- 第 8 步聊天发送消息：失败。Main 页面没有聊天入口。
+- 第 9 步家长侧绑定/查看：失败。家长账号注册成功，但进入学生端页面，没有绑定刚才学生账号的入口。
+
+代码现状判断：
+
+- `ChatService`、`ChatConversationView`、`ChatConversationCoordinator` 存在，后端 chat API smoke 已通过；缺口在 Main UI 入口/挂载。
+- `ParentService` 和 `ApiClient.bindChild/getChildPetStatus/getWeeklyReport` 存在，后端 parent API smoke 已通过；缺口在 parent role 登录后的路由和家长侧 UI。
+- 下一轮最小修复应集中在 `buddy-client`，不需要改 server。
+
+下一轮建议任务：
+
+`UI 主链路收口：聊天入口 + 家长侧入口`
+
+建议允许文件：
+
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+- `buddy-client/assets/scripts/ui/chat/*`
+- `buddy-client/assets/scripts/ui/login/*`
+- `buddy-client/assets/scripts/services/ParentService.ts`
+- `buddy-client/assets/scripts/services/ChatService.ts`
+- `buddy-client/assets/scripts/app/AppState.ts`
+- 必要时新增家长侧 UI 文件
+- root 文档：`PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/HANDOFF.md`、`docs/client/07-联调与测试/mvp-client-click-smoke-checklist.md`
+
+当前注意事项：
+
+- Cocos 自动修改了 `buddy-client/settings/v2/packages/cocos-service.json` 中的游戏名，本轮未处理，提交前需判断是否保留或还原。
+- 不应把第 8/9 步失败归因于后端；当前证据指向客户端 UI 缺口。
+# 2026-05-28 - UI 主链路收口实现
+
+触发原因：
+- 用户要求开始 `UI 主链路收口`。
+- Cocos 真实点击验收中第 8 步聊天失败，第 9 步家长侧失败。
+
+本轮已完成：
+- 在 `buddy-client/assets/scripts/ui/main/MainController.ts` 增加 Main 顶部“聊天”入口。
+- 聊天入口接入现有 `ChatService`、`ChatConversationCoordinator`、`ChatConversationView`。
+- PARENT 角色进入 Main 时渲染“家长中心”，不再进入学生宠物主页。
+- 家长中心提供绑定孩子、查看孩子宠物、查看周报、退出登录。
+- 收口 `ChatService`、`ParentService`、`ChatConversationCoordinator` 的用户可见乱码提示。
+- 更新 `PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/client/07-联调与测试/mvp-client-click-smoke-checklist.md`。
+
+验证结果：
+- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+未做：
+- 未修改 `buddy-server`。
+- 未提交、未推送、未运行 WSL 同步。
+- 未决定是否保留 Cocos 自动修改的 `settings/v2/packages/cocos-service.json` 与 `settings/v2/packages/information.json`。
+
+下一步：
+1. 用户在 Cocos 内复验 Main -> 聊天 -> 发送消息。
+2. 用户在 Cocos 内复验家长账号 -> 家长中心 -> 绑定孩子 -> 查看孩子宠物/周报。
+3. 复验通过后进入 Review Gate，检查 client/root diff 与 Cocos settings 取舍。
+4. 用户确认后再提交。
+
+# 2026-05-28 - 家长侧查看信息修复
+
+触发原因：
+- 用户在 Cocos 中验证到：家长绑定孩子成功，但无法查看孩子信息；重新登录后仍无法查看。
+
+判断：
+- 截图显示 `已绑定` 后已有 childId，绑定结果已经进入客户端状态。
+- `node tools/smoke-mvp-flow.mjs` 通过，包含 `parent bind child`、`parent view child pet`、`parent weekly report`，说明后端接口链路正常。
+- 问题集中在客户端家长中心 UI：低高度下“查看孩子宠物 / 查看周报”按钮被结果区域挤压或覆盖，用户难以点击；重新登录后也没有自动刷新已绑定孩子信息。
+
+本轮修复：
+- 调整 `MainController.renderParentHome()` 布局，增加最小面板高度。
+- 将“查看孩子宠物 / 查看周报 / 刷新”按钮固定在结果框上方，避免被覆盖。
+- PARENT 进入 Main 且已有 childId 时，自动拉取孩子宠物状态。
+- 绑定成功后自动拉取孩子宠物状态。
+
+验证：
+- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+- root: `node tools/smoke-mvp-flow.mjs` 通过，parent bind/view/report 均通过。
+
+下一步复验：
+1. 重新打开 Cocos 预览。
+2. 家长登录后应自动显示孩子宠物信息。
+3. 若没有自动显示，点击“刷新”。
+4. 再分别点击“查看孩子宠物”和“查看周报”。
+
+# 2026-05-28 - 家长中心体验与数据完整性收口
+
+触发原因：
+- 用户复验指出：
+  1. 退出按钮部分被遮挡。
+  2. 页面布局缺乏设计。
+  3. 数据不全，至少缺少体力数据。
+  4. 数据面板拖动后松手会回弹，必须一直按住才能看底部或顶部。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 切换到新版家长中心布局。
+  - 顶部固定标题与退出按钮，避免退出按钮被底部内容遮挡。
+  - 增加两张摘要卡：孩子宠物、本周学习。
+  - 底部详情区展示宠物详情、今日作业、周报和宠物概览。
+  - 宠物展示补充体力、清洁、阶段等字段。
+- `buddy-client/assets/scripts/ui/common/runtime/RuntimeUI.ts`
+  - `createScrollText` 新增 `elastic` 与 `scrollToTopOnCreate` 选项。
+  - 家长详情区关闭弹性回弹和自动回顶。
+- `buddy-client/assets/scripts/types/api.ts`
+  - 补齐 parent 相关 pet 字段类型。
+- `buddy-server/src/routes/parent.ts`
+  - `/parent/pet/:childId` 返回 `energy/health/cleanliness/stage`。
+  - `/parent/report/weekly` 的 `pet_status_summary` 返回 `energy/cleanliness/stage`。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+- server `bun test` 通过，57 pass / 0 fail。
+- root `node tools/smoke-mvp-flow.mjs` 通过，parent bind/view/report 均通过。
+
+下一步：
+1. 在 Cocos 中重新复验家长中心视觉布局。
+2. 确认退出按钮完整可见。
+3. 确认孩子宠物卡显示体力、清洁、阶段。
+4. 确认详情面板拖动后不会松手回弹。
+
+# 2026-05-28 - 家长中心布局二次收口
+
+触发原因：
+- 用户复验指出家长中心仍然不可读：标题与账号信息挤在一起，各区域缺少明显区分，信息卡和详情框体不清楚。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 将家长中心拆成顶部身份区、孩子账号绑定区、查看操作区、两张摘要卡、底部详情区。
+  - 增强主面板、摘要卡和详情区边框对比，避免“框体看不出来”。
+  - 修正摘要卡标题与正文坐标，避免标题跑到卡片外侧。
+  - 调整底部详情区位置，避免覆盖上方摘要卡。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+下一步：
+1. 在 Cocos 预览中重新进入家长中心。
+2. 检查标题、账号、退出按钮、绑定区、操作按钮、摘要卡、详情区是否层级清晰。
+3. 若视觉通过，再进入 Review Gate 处理 client/root/server 的本轮未提交改动。
+
+# 2026-05-28 - 家长中心面板思维重构
+
+触发原因：
+- 用户视觉验收指出家长中心仍是表单思维：绑定和退出占据黄金区域，宠物/作业核心数据被挤压，缺乏数据可视化、宠物情感连接和高级感。
+- 用户同时指出上轮关闭滚动弹性后，详情区变成完全无法拖动，应参考学生端日志报告的滚动体验。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 已绑定状态下隐藏绑定输入框，不再让低频绑定操作占据首屏核心区域。
+  - 顶部改成孩子成长摘要，展示孩子/绑定状态、今日作业环形完成度、刷新和退出低频操作。
+  - 中部左侧改为宠物成长面板，包含宠物视觉占位、饥饿/心情/体力/清洁进度条、成长目标提示。
+  - 中部右侧改为学习分析面板，包含本周分数柱状趋势和科目拆解进度条。
+  - 底部改为洞察滚动面板，使用与学生端日记类似的 `ScrollView + Mask + Content` 结构，恢复可拖动体验。
+  - 未绑定状态才显示绑定入口。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+下一步：
+1. 在 Cocos 中重新进入家长中心复验视觉层级。
+2. 重点检查首屏是否以宠物成长和学习分析为主，而不是绑定表单。
+3. 检查详情区是否可以像学生端日记一样拖动查看。
+4. 视觉通过后再进入本轮 Review Gate。
+
+# 2026-05-28 - 家长中心复用学生端视觉体系
+
+触发原因：
+- 用户指出不能重复造一套 UI 铲子，学生端主页面已经有成熟的视觉语言和运行时工具，家长中心应复用而不是重头再搞。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 引入并复用 `UiTokens`，将家长中心从偏冷独立配色拉回学生端暖色面板体系。
+  - 复用 `renderPawTitleDecor` 和 `renderDottedDivider`，给 header、宠物成长、学习分析、成长洞察加入学生端同款标题装饰和分割层级。
+  - 微调 header 高度、环形进度、核心卡片高度和底部洞察区结构，降低顶部拥挤和底部裸文本感。
+  - 底部洞察区改为独立卡片，内部保留 `ScrollView + Mask + Content` 可拖动结构。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+下一步：
+1. 在 Cocos 中复验家长中心是否和学生端主页面视觉语言一致。
+2. 重点检查标题装饰、卡片层级、滚动洞察区、顶部摘要区是否比上一版更稳定。
+3. 视觉通过后进入 Review Gate，整理本轮 client/root/server 未提交改动。
+
+# 2026-05-28 - 家长中心三栏主视觉布局
+
+触发原因：
+- 用户明确要求本轮只做一件事：在设计分辨率下，将“宠物成长 / 成长洞察 / 学习分析”做成并排 3 栏，占据面板主要空间，并压缩上栏高度和上栏到边框的距离。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 上栏高度从 96 压缩到 72，并减少顶部边距。
+  - 主内容区改为三个等宽竖栏：左侧宠物成长，中间成长洞察，右侧学习分析。
+  - 三栏共用同一高度，占据面板主要空间。
+  - 调整宠物成长和学习分析内部排版，以适配窄列宽度。
+  - 成长洞察从底部横向区改为中间竖向滚动栏。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+下一步：
+1. 在 Cocos 设计分辨率下复验三栏是否并排、等高、占据主要空间。
+2. 若三栏布局通过，再继续处理三栏内部视觉细节。
+
+# 2026-05-28 - 家长中心三栏宽度交互
+
+触发原因：
+- 用户明确要求本轮只做一件事：宠物成长、成长洞察、学习分析三栏具备正常宽度、压缩宽度、拉伸宽度三种状态。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 增加 `parentExpandedColumn` 状态。
+  - 增加三栏宽度布局计算：未选中时三栏正常等宽；选中某栏时该栏拉伸到主宽 48%，其余两栏压缩平分剩余宽度。
+  - 三栏 x 坐标随宽度重算，模拟被拉伸栏挤开其它栏。
+  - 三栏总宽保持不变，左栏左边缘和右栏右边缘不随状态变化。
+  - 点击同一栏再次恢复正常等宽。
+  - 成长洞察栏只在标题区域安装点击热区，避免覆盖下方滚动内容。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+下一步：
+1. 在 Cocos 中点击三栏标题/区域，检查宽度切换和横向挤压效果。
+2. 检查成长洞察栏滚动区域没有被点击热区挡住。
+
+# 2026-05-28 - 家长中心三栏交互修正
+
+触发原因：
+- 用户复验指出：
+  1. 点击中间栏没有反应。
+  2. 拉伸/压缩是线性瞬变，缺少渐入渐出的运动感。
+  3. 栏内标题、文字、图标没有跟随宽度变化重新布局，压缩/拉伸时出现飞出或乱动。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 将三栏点击从外部覆盖热区改为卡片自身响应点击，中间“成长洞察”整栏可点击。
+  - 增加三栏动画状态：from / to / start / animation frame。
+  - 宽度变化使用 260ms `easeInOutQuad` 二次缓入缓出曲线，避免线性硬切。
+  - 动画期间每帧重算三栏宽度与 x 坐标，保持左右总边界不变。
+  - 宠物成长、成长洞察、学习分析都增加 compact 宽度分档，标题、爪印、图表、滚动文字按当前栏宽缩放和重排。
+  - `onDestroy` 时取消三栏动画帧，避免离开页面后继续重绘。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+下一步：
+1. 在 Cocos 中点击左/中/右三栏，检查中间栏是否可以展开。
+2. 检查动画是否有缓入缓出速度变化。
+3. 检查压缩态和拉伸态下标题、图标、文字是否仍在各自栏内。
+
+# 2026-05-28 - 家长中心三栏复验问题修正
+
+触发原因：
+- 用户截图反馈：
+  1. 左/右栏拉伸时标题飞出栏外。
+  2. 左/右栏拉伸、中间栏压缩时，成长洞察内容左右乱动、上下跳动。
+  3. 中间栏变宽时，左右栏压缩状态仍未稳定实现。
+
+本轮修复：
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+  - 修正三栏标题坐标算法：`RuntimeUI.createLabel` 的 `x` 按中心点计算，标题改为 `左内边距 + 文本宽度 / 2`，保持真正左对齐。
+  - 宠物成长、成长洞察、学习分析三栏标题均应用统一左对齐算法。
+  - 成长洞察滚动区也安装点击响应，内容区点击可触发中间栏展开。
+  - 移除成长洞察每次渲染后的 `scrollToTop`，避免动画期间内容上下跳动。
+  - 增加 80ms 点击防抖，避免 shell 与子节点点击冒泡导致同一次点击触发两次切换。
+
+验证：
+- client `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+下一步：
+1. 复验左栏拉伸、右栏拉伸时标题是否留在栏内。
+2. 复验点击成长洞察内容区时，中间栏是否展开，左右栏是否压缩。
+3. 复验动画期间成长洞察内容是否不再上下跳。
