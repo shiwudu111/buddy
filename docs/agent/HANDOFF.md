@@ -1,5 +1,39 @@
 # Buddy Agent Handoff
 
+## 2026-05-29 - 家长中心三栏 section 拆分
+
+### 触发原因
+
+第 1 项主链路回归资产固化完成并提交推送后，按后续规划进入第 2 项：继续拆 `MainController.ts`。
+
+### 本轮已完成
+
+- 新增 `ParentSectionPanels.ts`，承接家长中心三栏内部渲染：宠物成长、成长洞察、学习分析。
+- 新增 `ParentSectionPanels.ts.meta`。
+- `MainController.ts` 改为向 section 模块传入数据、格式化函数和点击回调。
+- 保持 UI 行为、交互规则和 API 契约不变。
+
+### 验证结果
+
+- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+### 当前未做
+
+- 未修改 `buddy-server`。
+- 未修改 API 契约。
+- 未提交本轮 client/root 改动。
+- 未推送。
+- 未运行 WSL 同步。
+- 待用户 Cocos 人工复验家长中心三栏。
+
+### 下一步
+
+1. Review Gate 检查三仓库状态和 diff。
+2. 用户 Cocos 复验。
+3. 通过后分仓提交 client 和 root。
+
+---
+
 ## 2026-05-29 - 主链路回归资产固化
 
 ### 触发原因
