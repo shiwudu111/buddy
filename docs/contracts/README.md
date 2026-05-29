@@ -7,6 +7,7 @@
 - `auth.md`：注册、登录、当前用户
 - `pet.md`：宠物创建、宠物快照、互动、库存使用
 - `homework.md`：作业提交、作业历史、作业状态
+- `parent.md`：家长绑定、孩子宠物视图、周报
 - `dashboard.md`：主界面启动载荷
 - `diary.md`：日记视图使用的日志 / 事件
 
@@ -25,4 +26,5 @@
 - `auth.md`
 - `pet.md`
 - `homework.md`
+- `parent.md`
 - `diary.md`

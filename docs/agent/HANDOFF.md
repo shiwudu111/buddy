@@ -1,5 +1,40 @@
 # Buddy Agent Handoff
 
+## 2026-05-29 - 后端一致性与测试加固：学生端与家长侧响应契约
+
+### 触发原因
+
+第 3 项学生端主链路体验 polish 已提交、推送并同步 WSL。用户要求进入第 4 项：后端一致性与测试加固。
+
+### 本轮目标
+
+- 补齐学生端与家长侧接口契约，降低 UI 与后端字段理解偏差。
+- 加固 server 集成测试，对 dashboard、作业奖励、库存使用、日记事件、`/parent/pet/:childId` 和 `/parent/report/weekly` 的核心字段做稳定断言。
+
+### 当前边界
+
+- 不改 `buddy-client`。
+- 不新增接口。
+- 不做 migration。
+- 不改变认证方式。
+- 优先只补文档和测试；如果测试暴露后端真实缺口，再最小修运行时代码。
+
+### 待验证
+
+- `buddy-server`: `bun test` 已通过，57 pass / 0 fail，250 个断言。
+- 三仓库 `git status -sb`。
+
+### 本轮已完成
+
+- 新增 `docs/contracts/parent.md`。
+- 更新 `docs/contracts/README.md`。
+- 更新 `docs/contracts/pet.md`、`docs/contracts/homework.md`、`docs/contracts/diary.md`。
+- 加固 `buddy-server/tests/api.test.ts` 学生端与家长侧响应字段断言。
+- 未修改 `buddy-client`。
+- 未修改后端运行时代码。
+
+---
+
 ## 2026-05-29 - 学生端主链路体验 polish
 
 ### 触发原因

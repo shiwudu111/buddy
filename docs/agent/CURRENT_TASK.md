@@ -1,26 +1,30 @@
-# 当前任务：学生端主链路体验 polish
+# 当前任务：后端一致性与测试加固：学生端与家长侧响应契约
 
 ## 状态
 
-实现完成，等待 Review Gate 与 Cocos 人工复验。
+实现和测试完成，等待 Review Gate 与用户确认提交。
 
-## 已完成
+## 目标
 
-- `MainController.ts` 优化作业奖励、背包使用、日记同步失败的主链路反馈。
-- `MainBagPanel.ts` 优化背包空状态文案和口粮选择表头。
-- 未改后端，未改契约，未伪造库存或宠物状态。
-- Client TypeScript 检查通过。
-- MVP smoke 通过。
+- 补齐 `docs/contracts/parent.md`。
+- 更新 `docs/contracts/pet.md`、`docs/contracts/homework.md`、`docs/contracts/diary.md` 中学生端主链路字段。
+- 在契约索引中登记 parent 契约。
+- 加固 `buddy-server/tests/api.test.ts` 对学生端与家长侧响应字段的断言。
+- 优先不改运行时代码；如果测试暴露真实缺口，再最小修复后端。
 
-## 未做
+## 允许文件
 
-- 未修改 server。
-- 未修改 API 契约。
-- 未提交、未推送、未 WSL 同步。
+- `buddy-server/tests/api.test.ts`
+- `docs/contracts/README.md`
+- `docs/contracts/pet.md`
+- `docs/contracts/homework.md`
+- `docs/contracts/diary.md`
+- `docs/contracts/parent.md`
+- `PLAN.md`
+- `docs/agent/CURRENT_TASK.md`
+- `docs/agent/HANDOFF.md`
 
 ## 验证
 
-- `bunx tsc --noEmit --ignoreDeprecations 6.0`：通过。
-- `node tools/smoke-mvp-flow.mjs`：通过，12 个步骤 PASS。
+- `buddy-server`: `bun test` 通过，57 pass / 0 fail，250 个断言。
 - 待 Review Gate。
-- 待 Cocos 人工复验学生端作业、背包、日记主链路。

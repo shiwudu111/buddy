@@ -3,13 +3,13 @@
 ## 状态
 
 - 当前状态：生效
-- 客户端依赖：Main 日记页、Main 首屏日记预览
+- 客户端依赖：学生端 Main 日记页、Main 首屏日记预览
 - 后端 owner：`src/routes/pet.ts`
 - 客户端 owner：`assets/scripts/services/PetService.ts`、`assets/scripts/ui/main/MainJournalPanel.ts`
 
 ## 当前冻结规则
 
-- `dashboard.recent_events` 只用于 Main 首屏或日记页打开前的预览缓存。
+- `dashboard.recent_events` 只用于学生端 Main 首屏或日记页打开前的预览缓存。
 - 完整日记事件仍以 `GET /api/v1/pets/:petId/events` 为准。
 - 客户端不得伪造正式事件；只能展示后端返回事件，或在接口失败时保留已有缓存。
 - 事件按 `timestamp` 倒序展示。

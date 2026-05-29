@@ -11,8 +11,10 @@
 
 - MVP 当前冻结的是“创建宠物”，不是正式选蛋 / 孵化系统。
 - `eggType`、`species`、`rarity`、`hatchSeed` 不是当前正式响应承诺。
-- Pet 对外核心字段：`pet_id`、`name`、`level`、`hunger`、`mood`、`experience`、`stage`、`status`。
+- Pet 对外核心字段：`pet_id`、`name`、`level`、`hunger`、`energy`、`mood`、`cleanliness`、`experience`、`stage`、`status`、`display_status`。
 - 客户端不得自行伪造正式宠物数值。
+- Main 首屏以 `GET /api/v1/pets/:petId/dashboard` 为主数据源。
+- 背包消耗以 `/inventory/use` 返回为准，客户端不得本地扣库存。
 
 ## `POST /api/v1/pets`
 
@@ -34,10 +36,13 @@
     "name": "Buddy",
     "level": 1,
     "hunger": 100,
+    "energy": 100,
     "mood": 100,
+    "cleanliness": 100,
     "experience": 0,
     "stage": "STAGE_1",
-    "status": true
+    "status": true,
+    "display_status": "idle"
   }
 }
 ```
@@ -54,10 +59,127 @@
     "name": "Buddy",
     "level": 1,
     "hunger": 100,
+    "energy": 100,
     "mood": 100,
+    "cleanliness": 100,
     "experience": 0,
     "stage": "STAGE_1",
-    "status": true
+    "status": true,
+    "display_status": "idle"
+  }
+}
+```
+
+## `GET /api/v1/pets/:petId/dashboard`
+
+### 成功响应核心字段
+
+```json
+{
+  "success": true,
+  "data": {
+    "pet": {
+      "pet_id": "uuid",
+      "name": "Buddy",
+      "level": 1,
+      "hunger": 100,
+      "energy": 100,
+      "mood": 100,
+      "cleanliness": 100,
+      "experience": 0,
+      "stage": "STAGE_1",
+      "status": true,
+      "display_status": "idle",
+      "lastDecayAt": "2026-05-29T00:00:00.000Z"
+    },
+    "foods": [
+      {
+        "food_type": "meal_box",
+        "food_quality": "normal",
+        "count": 1
+      }
+    ],
+    "inventory": [
+      {
+        "itemType": "food",
+        "food_type": "meal_box",
+        "food_quality": "normal",
+        "count": 1
+      }
+    ],
+    "dailyBasicFood": {
+      "granted": true,
+      "item": {
+        "itemType": "food",
+        "food_type": "meal_box",
+        "food_quality": "normal",
+        "count": 1
+      }
+    },
+    "offlineDecay": {
+      "applied": false,
+      "elapsedHours": 0,
+      "message": "离线不足 1 小时，状态未变化。"
+    },
+    "timeContext": {
+      "serverNow": "2026-05-29T00:00:00.000Z",
+      "timezone": "Asia/Shanghai",
+      "localDate": "2026-05-29",
+      "dayPeriod": "morning",
+      "lastSeenAt": null,
+      "returnGreeting": {
+        "shouldShow": false,
+        "text": "",
+        "reason": "none"
+      }
+    },
+    "recent_events": []
+  }
+}
+```
+
+响应头应包含 `Cache-Control: no-store`，避免 Main 首屏拿到陈旧状态。
+
+## `POST /api/v1/pets/:petId/inventory/use`
+
+### 请求
+
+```json
+{
+  "itemType": "food",
+  "food_type": "logic_cookie",
+  "food_quality": "premium"
+}
+```
+
+### 成功响应
+
+```json
+{
+  "success": true,
+  "data": {
+    "pet": {
+      "pet_id": "uuid",
+      "hunger": 100,
+      "mood": 100,
+      "cleanliness": 100,
+      "lastDecayAt": "2026-05-29T00:00:00.000Z"
+    },
+    "inventory": [],
+    "foods": [],
+    "logs": [
+      {
+        "kind": "inventory_food_use",
+        "title": "使用口粮",
+        "detail": "已使用优质逻辑饼干",
+        "timestamp": "2026-05-29T00:00:00.000Z"
+      }
+    ],
+    "offlineDecay": {
+      "applied": false,
+      "elapsedHours": 0,
+      "message": "离线不足 1 小时，状态未变化。"
+    }
   }
 }
 ```
