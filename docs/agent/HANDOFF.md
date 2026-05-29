@@ -1,5 +1,42 @@
 # Buddy Agent Handoff
 
+## 2026-05-28 - 家长中心组件化拆分
+
+### 触发原因
+
+用户确认先提交 root 账本文档，然后开始下一轮开发任务：家长中心组件化拆分。
+
+### 本轮已完成
+
+- root 账本文档已先行提交：`94048d8 docs(agent): repair task ledger`。
+- 新增 `buddy-client/assets/scripts/ui/main/parent/ParentDashboardTypes.ts`，集中家长中心类型。
+- 新增 `buddy-client/assets/scripts/ui/main/parent/ParentColumnLayout.ts`，集中三栏宽度、位置和动画进度算法。
+- 新增 `buddy-client/assets/scripts/ui/main/parent/ParentDashboardPanel.ts`，承接家长中心顶层面板、顶部摘要区和三栏编排。
+- `MainController.ts` 保留数据请求和细节渲染，主面板编排改为调用新模块。
+- 新增三个 Cocos TypeScript `.meta` 文件。
+
+### 验证结果
+
+- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+
+### 当前未做
+
+- 未修改 `buddy-server`。
+- 未修改 API 契约。
+- 未新增家长侧功能。
+- 未提交本轮 client/root 改动。
+- 未推送。
+- 未运行 WSL 同步。
+- 待用户 Cocos 人工复验家长中心三栏点击、拉伸/压缩、刷新、退出。
+
+### 下一步
+
+1. Review Gate：检查 root/client/server status 和 diff。
+2. 用户 Cocos 复验。
+3. 通过后分仓提交：client -> root。
+
+---
+
 ## 2026-05-28 - Agent 账本编码修复
 
 ### 触发原因
