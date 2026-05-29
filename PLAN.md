@@ -2,47 +2,52 @@
 
 ## 当前任务
 
-发布与同步流程稳定化：release plan 预检。
+服务器云端迁移方案与环境清单。
 
-本轮执行后续规划第 5 项，目标是让每次提交、推送、WSL 同步、健康检查都标准化。当前切口是给 release 工具增加只读 `--plan` 预检，一次性查看三仓库状态、分支、远端对齐和后续命令。
+下一版本三大目标已经明确。当前进入目标一的第一步：只写云端迁移方案和环境清单，不改 server 运行代码，为后续 CORS 环境化、部署脚本和云端 smoke 做准备。
 
 ## Task Packet
 
 ```text
-Task Name: 发布与同步流程稳定化：release plan 预检
-Goal: 让 release 前状态检查从人工多命令变成一个只读工具入口，减少漏检查和路径混淆。
+Task Name: 服务器云端迁移方案与环境清单
+Goal: 明确 buddy-server 云端迁移路线、环境变量、机器环境、部署/健康检查/回滚要求。
 Repos: root
 Allowed Files:
-  root/tools/release-sync.mjs
-  root/docs/client/07-联调与测试/release-smoke-checklist.md
+  root/docs/agent/NEXT_VERSION_PLAN.md
+  root/docs/server/CLOUD-MIGRATION-PLAN.md
   root/PLAN.md
   root/docs/agent/CURRENT_TASK.md
   root/docs/agent/HANDOFF.md
 Out of Scope:
   不改 buddy-client。
   不改 buddy-server。
-  不提交、不推送、不同步，除非用户确认。
+  不做新功能。
+  不提交、不推送，除非用户确认。
 Backend Impact: 无。
 Client Impact: 无。
 Contract Impact: 无。
 Validation:
-  root: node --check tools/release-sync.mjs
-  root: node tools/release-sync.mjs --plan
   root/client/server git status -sb
+  文档内容自检：迁移路线、环境变量、部署命令、验收门槛和风险是否清楚
 Commit Plan: 本轮先不提交，等用户确认。
 ```
 
 ## 本轮完成项
 
-- `tools/release-sync.mjs` 新增 `--plan` 只读预检。
-- `--plan` 输出 root/client/server 的路径、分支、状态、最新提交、远端对齐和 sync/check 建议命令。
-- `--plan` 在脏工作区会给出 `Decision: blocked or needs review`。
-- `docs/client/07-联调与测试/release-smoke-checklist.md` 已把 `--plan` 加为标准流程第一步。
-- `node --check tools/release-sync.mjs` 已通过。
-- `node tools\release-sync.mjs --plan` 已在真实 PowerShell 权限下通过。
+- 全链路测试已通过：
+  - `node tools\release-sync.mjs --plan`：ready for release actions。
+  - client `bunx tsc --noEmit --ignoreDeprecations 6.0`：通过。
+  - server `bun test`：57 pass / 0 fail，250 个断言。
+  - root `node tools\smoke-mvp-flow.mjs`：12 个步骤 PASS。
+  - client WSL sync/check：`tmp_absent`、`docs_absent`。
+  - server WSL sync/check：migrate 无 pending，generate 成功，服务健康。
+- 已新增下一版本规划文档，围绕三个目标：
+  - 服务器云端迁移。
+  - 客户端可提交，手机端可以体验测试，支持热更新。
+  - 学生端主链路体验优化，目标满足用户一日内完整体验。
+- 已新增 `docs/server/CLOUD-MIGRATION-PLAN.md`，记录云端迁移方案与环境清单。
 
 ## 下一步
 
 1. Review Gate 检查三仓库状态和 diff。
 2. 用户确认后提交 root。
-3. 推送 root。
