@@ -4,7 +4,8 @@
 
 服务器云端迁移方案与环境清单。
 
-下一版本三大目标已经明确。当前进入目标一的第一步：只写云端迁移方案和环境清单，不改 server 运行代码，为后续 CORS 环境化、部署脚本和云端 smoke 做准备。
+下一版本三大目标已经明确。
+当前进入目标一的第一步：完成云端迁移方案和环境清单，并记录 server 云端配置前置改造结果。server CORS/env 配置已在 buddy-server 的 deploy/cloud-staging-v1 分支完成并推送；root 本轮只提交文档和账本，不再修改 server 运行代码。
 
 ## Task Packet
 
@@ -46,6 +47,11 @@ Commit Plan: 本轮先不提交，等用户确认。
   - 客户端可提交，手机端可以体验测试，支持热更新。
   - 学生端主链路体验优化，目标满足用户一日内完整体验。
 - 已新增 `docs/server/CLOUD-MIGRATION-PLAN.md`，记录云端迁移方案与环境清单。
+- buddy-server 云端配置前置改造已完成：
+  - 分支：deploy/cloud-staging-v1。
+  - 提交：8d0b7a5 chore(deploy): add cloud env configuration。
+  - 内容：CORS 改为 ALLOWED_ORIGINS 环境变量驱动；.env.example 补充 ALLOWED_ORIGINS / PUBLIC_API_BASE_URL / LOG_LEVEL；新增 .env.production.example。
+  - 验证：buddy-server bun test 57/57 通过；GET / 健康检查通过。
 
 ## 下一步
 
