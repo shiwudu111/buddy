@@ -1,5 +1,33 @@
 # Buddy Agent Handoff
 
+## 2026-05-29 - 主链路回归资产固化
+
+### 触发原因
+
+用户确认后续规划顺序，并要求按规划执行后续开发。本轮执行第 1 项：主链路回归资产固化。
+
+### 本轮已完成
+
+- 重写 MVP Cocos UI 真实点击验收清单为可读中文版本。
+- 新增 Release Smoke Checklist，固化 root/client/server status、client tsc、server test、WSL sync/check、MVP smoke、Cocos 人工验收记录模板。
+- 增强 `tools/smoke-mvp-flow.mjs` 的失败定位：输出当前步骤、Base URL、WSL smoke 推荐命令。
+
+### 边界
+
+- 未修改 client/server 业务代码。
+- 未修改 API 契约。
+- Windows 是研发修改调试区。
+- WSL 是最终运行维护和 smoke 验证区。
+
+### 下一步
+
+1. 运行 smoke 验证。
+2. Review Gate 检查三仓库状态。
+3. 用户确认后提交 root。
+4. 下一轮进入第 2 项：继续拆 `MainController.ts`。
+
+---
+
 ## 2026-05-28 - 家长中心组件化拆分
 
 ### 触发原因

@@ -2,52 +2,49 @@
 
 ## 当前任务
 
-家长中心组件化拆分。
+主链路回归资产固化。
 
-上一轮家长中心 UI 与三栏交互已经通过 Cocos 人工验收，但实现集中在 `MainController.ts`。本轮目标是先做低风险结构拆分：把家长中心面板编排、三栏布局算法和类型从 Controller 中拆出，保持用户可见行为不变。
+本轮按后续迭代规划执行第 1 项：把已经通过的 MVP 主链路验收、Release Smoke、WSL/Windows 运行边界固化成可重复使用的资产。默认只修改 root 文档和 root 工具，不修改 client/server 业务代码。
 
 ## Task Packet
 
 ```text
-Task Name: 家长中心组件化拆分
-Goal: 将家长中心 UI 和三栏交互从 MainController.ts 中拆成独立模块，保持现有行为不变。
-Repos: buddy-client, root
+Task Name: 主链路回归资产固化
+Goal: 固化 MVP 主链路回归清单、Release Smoke 模板，并增强 smoke 脚本失败定位。
+Repos: root
 Allowed Files:
-  buddy-client/assets/scripts/ui/main/MainController.ts
-  buddy-client/assets/scripts/ui/main/parent/ParentDashboardPanel.ts
-  buddy-client/assets/scripts/ui/main/parent/ParentColumnLayout.ts
-  buddy-client/assets/scripts/ui/main/parent/ParentDashboardTypes.ts
-  root/PLAN.md
-  root/docs/agent/CURRENT_TASK.md
-  root/docs/agent/HANDOFF.md
+  tools/smoke-mvp-flow.mjs
+  docs/client/07-联调与测试/mvp-client-click-smoke-checklist.md
+  docs/client/07-联调与测试/release-smoke-checklist.md
+  docs/agent/CURRENT_TASK.md
+  docs/agent/HANDOFF.md
+  PLAN.md
 Out of Scope:
-  不改 server。
+  不改 buddy-client 业务代码。
+  不改 buddy-server 业务代码。
   不改 API 契约。
-  不新增家长侧新功能。
-  不重做视觉风格。
+  不提交、不推送，除非用户确认。
 Backend Impact: 无。
-Client Impact: 仅结构拆分，家长中心行为保持不变。
+Client Impact: 无。
 Contract Impact: 无。
 Validation:
-  1. buddy-client: bunx tsc --noEmit --ignoreDeprecations 6.0
+  1. node tools/smoke-mvp-flow.mjs，必要时按 WSL 方式运行
   2. root/client/server git status -sb
-  3. Cocos 人工复验家长中心三栏点击、拉伸/压缩、刷新、退出
+  3. 人工核对文档为可读中文
 Commit Plan: 本轮先不提交，等用户确认。
 Risks:
-  1. 新增 Cocos TS 文件需要携带 .meta。
-  2. 本轮只拆边界，不继续扩大 UI 或数据产品功能。
+  Windows localhost 与 WSL mirrored 网络可能误判，所以文档和脚本提示必须明确 WSL 是最终 smoke 区。
 ```
 
-## 本轮已完成
+## 本轮完成项
 
-- 新增 `ParentDashboardTypes.ts`，集中家长中心类型。
-- 新增 `ParentColumnLayout.ts`，集中三栏宽度、位置、动画进度计算。
-- 新增 `ParentDashboardPanel.ts`，承接家长中心顶层面板、顶部摘要区、三栏编排。
-- `MainController.ts` 保留数据请求、状态和细节渲染能力，但主面板编排已改为调用新模块。
-- `bunx tsc --noEmit --ignoreDeprecations 6.0` 已通过。
+- 重写 MVP Cocos UI 真实点击验收清单为当前可读中文版本。
+- 新增 Release Smoke Checklist。
+- 增强 `tools/smoke-mvp-flow.mjs` 的步骤输出和失败定位。
 
 ## 下一步
 
-1. Review Gate：检查 root/client/server 状态和 diff。
-2. 用户在 Cocos 中复验家长中心：刷新、退出、三栏点击、拉伸/压缩。
-3. 通过后再分仓提交：client 提交组件化拆分，root 提交任务账本。
+1. 运行 smoke 验证。
+2. Review Gate 检查三仓库状态。
+3. 用户确认后提交 root。
+4. 下一轮进入规划第 2 项：继续拆 `MainController.ts`。

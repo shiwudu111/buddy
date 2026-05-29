@@ -22,6 +22,7 @@ const state = {
 };
 
 const checks = [];
+let currentStep = "startup";
 
 function record(step, passed, details = {}) {
   checks.push({ step, passed, details });
@@ -32,7 +33,13 @@ function record(step, passed, details = {}) {
   }
 }
 
+function begin(step) {
+  currentStep = step;
+  console.log(`\n== ${step} ==`);
+}
+
 async function request(path, options = {}) {
+  const method = options.method || "GET";
   const response = await fetch(`${baseUrl}${path}`, {
     ...options,
     headers: {
@@ -43,7 +50,7 @@ async function request(path, options = {}) {
   const json = await response.json().catch(() => ({}));
   if (!response.ok || json.success === false) {
     throw new Error(
-      `${options.method || "GET"} ${path} failed: ${response.status} ${JSON.stringify(json)}`
+      `${method} ${path} failed against ${baseUrl}: ${response.status} ${JSON.stringify(json)}`
     );
   }
   return json;
@@ -56,7 +63,9 @@ function authHeader(token) {
 async function run() {
   console.log(`Buddy MVP smoke flow`);
   console.log(`Base URL: ${baseUrl}`);
+  console.log(`Runtime note: Windows is the editing workspace; WSL is the final smoke/runtime workspace.`);
 
+  begin("child register");
   const childRegister = await request("/auth/register", {
     method: "POST",
     body: JSON.stringify({ ...child, role: "CHILD" }),
@@ -67,12 +76,14 @@ async function run() {
     username: childRegister.data.user.username,
   });
 
+  begin("child login");
   const childLogin = await request("/auth/login", {
     method: "POST",
     body: JSON.stringify(child),
   });
   record("child login", childLogin.data.user.username === child.username);
 
+  begin("create pet");
   const petCreate = await request("/pets", {
     method: "POST",
     headers: authHeader(state.childToken),
@@ -81,6 +92,7 @@ async function run() {
   state.petId = petCreate.data.pet_id;
   record("create pet", Boolean(state.petId), { petId: state.petId });
 
+  begin("dashboard refresh");
   const dashboard = await request(`/pets/${state.petId}/dashboard`, {
     headers: authHeader(state.childToken),
   });
@@ -90,6 +102,7 @@ async function run() {
     recentEvents: dashboard.data.recent_events?.length ?? 0,
   });
 
+  begin("submit homework reward");
   const homework = await request("/homeworks/submit", {
     method: "POST",
     headers: authHeader(state.childToken),
@@ -109,7 +122,11 @@ async function run() {
       rewardItem,
     }
   );
+  if (!rewardItem) {
+    throw new Error("homework reward did not return a usable inventory item; cannot continue inventory consume step");
+  }
 
+  begin("use inventory reward");
   const useInventory = await request(`/pets/${state.petId}/inventory/use`, {
     method: "POST",
     headers: authHeader(state.childToken),
@@ -123,6 +140,7 @@ async function run() {
     logs: useInventory.data.logs?.length ?? 0,
   });
 
+  begin("diary events");
   const events = await request(`/pets/${state.petId}/events?limit=20`, {
     headers: authHeader(state.childToken),
   });
@@ -134,6 +152,7 @@ async function run() {
     hasReward,
   });
 
+  begin("chat send");
   const chat = await request("/chat", {
     method: "POST",
     headers: authHeader(state.childToken),
@@ -143,6 +162,7 @@ async function run() {
     messageId: chat.data.message?.id ?? null,
   });
 
+  begin("parent register");
   const parentRegister = await request("/auth/register", {
     method: "POST",
     body: JSON.stringify({ ...parent, role: "PARENT" }),
@@ -152,6 +172,7 @@ async function run() {
     username: parentRegister.data.user.username,
   });
 
+  begin("parent bind child");
   const bind = await request("/parent/bind", {
     method: "POST",
     headers: authHeader(state.parentToken),
@@ -161,6 +182,7 @@ async function run() {
     childId: bind.data.childId || bind.data.child_id,
   });
 
+  begin("parent view child pet");
   const parentPet = await request(`/parent/pet/${state.childUserId}`, {
     headers: authHeader(state.parentToken),
   });
@@ -168,6 +190,7 @@ async function run() {
     hasHomework: Boolean(parentPet.data.today_homework),
   });
 
+  begin("parent weekly report");
   const weekly = await request(`/parent/report/weekly?child_id=${state.childUserId}`, {
     headers: authHeader(state.parentToken),
   });
@@ -184,14 +207,16 @@ async function run() {
 
 run().catch((error) => {
   console.error("[FAIL] MVP smoke flow aborted");
+  console.error(`Current step: ${currentStep}`);
+  console.error(`Base URL: ${baseUrl}`);
   console.error(error instanceof Error ? error.message : error);
-  if (baseUrl === DEFAULT_BASE_URL && error instanceof Error && error.message.includes("fetch failed")) {
-    console.error("");
-    console.error("Hint: runtime maintenance and final smoke checks happen inside WSL.");
-    console.error("Windows is the development/editing workspace; run the smoke flow inside WSL:");
-    console.error(
-      "  wsl.exe -d Ubuntu-24.04 -- sh -lc \"cd /mnt/e/buddy && BUDDY_API_BASE_URL=http://localhost:3000/api/v1 node tools/smoke-mvp-flow.mjs\""
-    );
-  }
+  console.error("");
+  console.error("Troubleshooting:");
+  console.error("- Confirm the WSL server is running: curl http://localhost:3000/");
+  console.error("- Final release smoke should run inside WSL, not from a stale Windows localhost assumption.");
+  console.error(
+    "- WSL command: wsl.exe -d Ubuntu-24.04 -- sh -lc \"cd /mnt/e/buddy && BUDDY_API_BASE_URL=http://localhost:3000/api/v1 node tools/smoke-mvp-flow.mjs\""
+  );
+  console.error("- If the failure is after a PASS step, inspect the named Current step first.");
   process.exitCode = 1;
 });
