@@ -1,4 +1,4 @@
-# 当前任务：继续拆 MainController：家长中心三栏 section
+# 当前任务：学生端主链路体验 polish
 
 ## 状态
 
@@ -6,11 +6,11 @@
 
 ## 已完成
 
-- 新增 `buddy-client/assets/scripts/ui/main/parent/ParentSectionPanels.ts`。
-- 新增 `ParentSectionPanels.ts.meta`。
-- `MainController.ts` 的宠物成长、成长洞察、学习分析三栏内部渲染已迁出。
-- Controller 继续保留数据请求、状态管理、格式化和业务回调。
+- `MainController.ts` 优化作业奖励、背包使用、日记同步失败的主链路反馈。
+- `MainBagPanel.ts` 优化背包空状态文案和口粮选择表头。
+- 未改后端，未改契约，未伪造库存或宠物状态。
 - Client TypeScript 检查通过。
+- MVP smoke 通过。
 
 ## 未做
 
@@ -21,5 +21,6 @@
 ## 验证
 
 - `bunx tsc --noEmit --ignoreDeprecations 6.0`：通过。
+- `node tools/smoke-mvp-flow.mjs`：通过，12 个步骤 PASS。
 - 待 Review Gate。
-- 待 Cocos 人工复验。
+- 待 Cocos 人工复验学生端作业、背包、日记主链路。

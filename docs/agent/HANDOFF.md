@@ -1,5 +1,42 @@
 # Buddy Agent Handoff
 
+## 2026-05-29 - 学生端主链路体验 polish
+
+### 触发原因
+
+root/client 已推送完成后，按后续规划进入第 3 项：学生端主链路体验 polish。
+
+### 本轮已完成
+
+- `MainController.ts` 优化作业奖励反馈：奖励进入背包、使用后可在日记查看记录。
+- `MainController.ts` 优化背包使用反馈：使用成功后提示宠物状态已刷新，并引导查看日记。
+- `MainController.ts` 优化日记同步失败提示：区分缓存记录和网络异常，避免误判为同步成功。
+- `MainBagPanel.ts` 将口粮选择表头从技术字段改为中文。
+- `MainBagPanel.ts` 优化无可用口粮时的作业奖励引导。
+
+### 验证结果
+
+- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+- `root`: `node tools/smoke-mvp-flow.mjs` 通过，12 个步骤 PASS。
+
+### 当前未做
+
+- 未修改 `buddy-server`。
+- 未修改 API 契约。
+- 未提交本轮 client/root 改动。
+- 未推送。
+- 未运行 WSL 同步。
+- 待用户 Cocos 人工复验学生端作业、背包、日记主链路。
+
+### 下一步
+
+1. Review Gate 检查 root/client/server status 和 diff。
+2. 用户 Cocos 复验。
+3. 通过后分仓提交 client 和 root。
+4. 推送后运行 client WSL sync/check。
+
+---
+
 ## 2026-05-29 - 家长中心三栏 section 拆分
 
 ### 触发原因
