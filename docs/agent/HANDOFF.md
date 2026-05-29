@@ -1,5 +1,63 @@
 # Buddy Agent Handoff
 
+## 2026-05-29 手动操作记录：cloud staging 准备
+
+操作者：用户手动执行，Codex 未参与。
+
+已做：
+- 在 buddy-server 创建分支 deploy/cloud-staging-v1。
+- 准备处理云端部署相关内容：CORS 环境变量、.env.production.example、部署文档、smoke 文档。
+- 暂未修改业务接口。
+
+不要碰：
+- buddy-client 业务代码。
+- pet / inventory / homework / diary 主链路。
+- 已完成的每日基础粮食和 timeContext 逻辑。
+
+下一步：
+- 先检查 git status。
+- 只在 buddy-server 内推进云端部署准备。
+
+## 2026-05-29 - 全链路测试与下一版本规划
+
+### 触发原因
+
+用户要求全链路测试一次，没有问题则进入下一项。
+
+### 全链路测试结果
+
+- `node tools\release-sync.mjs --plan`：通过，三仓库 clean、remote aligned、Decision 为 ready。
+- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+- `buddy-server`: `bun test` 通过，57 pass / 0 fail，250 个断言。
+- `root`: `node tools\smoke-mvp-flow.mjs` 通过，12 个步骤 PASS。
+- client WSL sync/check 通过：`tmp_absent`、`docs_absent`。
+- server WSL sync/check 通过：无 pending migration，Prisma generate 成功，服务健康。
+
+### 当前进入任务
+
+第 6 项：版本提交规划 / 下一版本大目标。
+
+### 用户指定的下一版本三目标
+
+1. 服务器云端迁移。
+2. 客户端可提交，手机端可以体验测试，支持热更新。
+3. 学生端主链路体验优化，目标满足用户一日内完整体验。
+
+### 目标一当前推进
+
+- 已开始“服务器云端迁移方案与环境清单”。
+- 本轮只写 root 文档，不改 `buddy-server` 运行代码。
+- 关键风险：当前 server CORS 在 `src/index.ts` 硬编码本地来源，云端迁移前应改为环境变量配置。
+
+### 边界
+
+- 本轮只写 root 文档。
+- 不改 `buddy-client`。
+- 不改 `buddy-server`。
+- 不做新功能。
+
+---
+
 ## 2026-05-29 - 发布与同步流程稳定化：release plan 预检
 
 ### 触发原因
