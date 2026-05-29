@@ -1,5 +1,40 @@
 # Buddy Agent Handoff
 
+## 2026-05-29 - 发布与同步流程稳定化：release plan 预检
+
+### 触发原因
+
+第 4 项后端一致性与测试加固已提交、推送并完成 server WSL sync/check。用户要求进入第 5 项。
+
+### 本轮目标
+
+- 给 `tools/release-sync.mjs` 增加只读 `--plan`。
+- 让 release 前状态检查标准化：三仓库路径、分支、状态、最新提交、远端对齐、sync/check 命令一次输出。
+- 更新 Release Smoke Checklist，把 `--plan` 放到标准流程第一步。
+
+### 当前边界
+
+- 不改 `buddy-client`。
+- 不改 `buddy-server`。
+- 不提交、不推送、不同步，除非用户确认。
+- `--plan` 不执行写操作。
+
+### 待验证
+
+- `node --check tools/release-sync.mjs` 已通过。
+- `node tools\release-sync.mjs --plan` 已在真实 PowerShell 权限下通过。
+- 当前 root 有本轮未提交改动，因此 `--plan` 正确显示 `Decision: blocked or needs review`。
+- 三仓库 `git status -sb`。
+
+### 本轮已完成
+
+- `tools/release-sync.mjs` 新增 `--plan`。
+- `--plan` 使用只读 git 检查 root/client/server 的路径、分支、状态、最新提交和远端对齐。
+- `--plan` 输出对应 runtime repo 的 sync/check 命令。
+- Release Smoke Checklist 已把 `--plan` 放入标准流程第一步。
+
+---
+
 ## 2026-05-29 - 后端一致性与测试加固：学生端与家长侧响应契约
 
 ### 触发原因

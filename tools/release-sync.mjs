@@ -42,12 +42,14 @@ function usage() {
   console.log(`Buddy release/sync helper
 
 Usage:
+  node tools/release-sync.mjs --plan
   node tools/release-sync.mjs --repo client --status
   node tools/release-sync.mjs --repo client --push --sync
   node tools/release-sync.mjs --repo server --push --sync
   node tools/release-sync.mjs --repo root --push
 
 Options:
+  --plan                       Show release status and next commands for all repos.
   --repo <root|client|server>  Repository to operate on.
   --status                     Show branch/status and latest commit.
   --push                       Push the repo's current branch.
@@ -93,7 +95,38 @@ function runText(command, cwd) {
     encoding: "utf8",
   });
   if (result.status !== 0) {
-    throw new Error((result.stderr || result.stdout || command).trim());
+    throw new Error(
+      [
+        `Command failed with exit code ${result.status}: ${command}`,
+        `cwd: ${cwd}`,
+        result.stderr?.trim(),
+        result.stdout?.trim(),
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
+  }
+  return result.stdout.trim();
+}
+
+function runGitText(args, cwd) {
+  const result = spawnSync("git", args, {
+    cwd,
+    shell: false,
+    encoding: "utf8",
+  });
+  if (result.status !== 0) {
+    throw new Error(
+      [
+        `Command failed with exit code ${result.status}: git ${args.join(" ")}`,
+        `cwd: ${cwd}`,
+        result.error ? String(result.error) : "",
+        result.stderr?.trim(),
+        result.stdout?.trim(),
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
   }
   return result.stdout.trim();
 }
@@ -114,6 +147,63 @@ function status(repo) {
   console.log(`\n== ${repo.label} status ==`);
   run("git status -sb", { cwd: repo.cwd });
   run("git log --oneline -1", { cwd: repo.cwd });
+}
+
+function getStatus(repo) {
+  return runGitText(["status", "-sb"], repo.cwd);
+}
+
+function getStatusLine(statusText) {
+  return statusText.split(/\r?\n/)[0] || "";
+}
+
+function getHead(repo) {
+  return runGitText(["log", "--oneline", "-1"], repo.cwd);
+}
+
+function getBranch(repo) {
+  return runGitText(["branch", "--show-current"], repo.cwd);
+}
+
+function printReleasePlan() {
+  console.log("Buddy release plan");
+  console.log("Windows workspace: E:\\buddy");
+  console.log("WSL runtime: /home/openclaw/.openclaw/workspace-cipher");
+  console.log("Run sync/check commands serially after commits and pushes.\n");
+
+  let blocked = false;
+  for (const repo of Object.values(repos)) {
+    const branch = getBranch(repo);
+    const statusText = getStatus(repo);
+    const statusLine = getStatusLine(statusText);
+    const head = getHead(repo);
+    const branchOk = branch === repo.branch;
+    const clean = statusText.split(/\r?\n/).length === 1;
+    const synced = statusLine.includes(`...origin/${repo.branch}`) && !/[<>]/.test(statusLine);
+    blocked = blocked || !branchOk || !clean || !synced;
+
+    console.log(`== ${repo.label} ==`);
+    console.log(`path: ${repo.cwd}`);
+    console.log(`branch: ${branch} ${branchOk ? "(ok)" : `(expected ${repo.branch})`}`);
+    console.log(`status: ${statusLine || "(empty)"}`);
+    console.log(`head: ${head}`);
+    console.log(`clean: ${clean ? "yes" : "no"}`);
+    console.log(`remote: ${synced ? "aligned" : "check before release"}`);
+    if (repo.sync) {
+      console.log(`sync/check: node tools\\release-sync.mjs --repo ${repo.label} --sync --check`);
+    } else {
+      console.log("sync/check: n/a");
+    }
+    console.log("");
+  }
+
+  console.log("Suggested release order:");
+  console.log("1. Run required tests: client tsc and/or server bun test.");
+  console.log("2. Commit each dirty repo separately.");
+  console.log("3. Push server/client develop and root main as applicable.");
+  console.log("4. Run serial WSL sync/check for touched runtime repos.");
+  console.log("5. Record result in docs/agent/HANDOFF.md.");
+  console.log(`\nDecision: ${blocked ? "blocked or needs review" : "ready for release actions"}`);
 }
 
 function ensureBranch(repo) {
@@ -148,6 +238,11 @@ function check(repo) {
 async function main() {
   if (args.has("--help") || args.has("-h")) {
     usage();
+    return;
+  }
+
+  if (args.has("--plan")) {
+    printReleasePlan();
     return;
   }
 

@@ -13,16 +13,26 @@
 
 ## 标准顺序
 
-1. root status：`git status -sb`
-2. client status：`git status -sb`
-3. server status：`git status -sb`
-4. client TypeScript：`bunx tsc --noEmit --ignoreDeprecations 6.0`
-5. server tests：`bun test`，仅 server 改动或契约改动时必跑。
-6. 分仓提交。
-7. 分仓推送。
-8. WSL sync。
-9. post-sync check。
-10. smoke 记录写入 handoff。
+1. release plan 预检：`node tools\release-sync.mjs --plan`
+2. root status：`git status -sb`
+3. client status：`git status -sb`
+4. server status：`git status -sb`
+5. client TypeScript：`bunx tsc --noEmit --ignoreDeprecations 6.0`
+6. server tests：`bun test`，仅 server 改动或契约改动时必跑。
+7. 分仓提交。
+8. 分仓推送。
+9. WSL sync。
+10. post-sync check。
+11. smoke 记录写入 handoff。
+
+## Release Plan 预检
+
+```powershell
+cd E:\buddy
+node tools\release-sync.mjs --plan
+```
+
+用途：一次性查看 root / client / server 的路径、分支、状态、最新提交、远端对齐情况和后续 sync/check 命令。该命令只读，不提交、不推送、不同步。
 
 ## Root Push
 

@@ -1,30 +1,26 @@
-# 当前任务：后端一致性与测试加固：学生端与家长侧响应契约
+# 当前任务：发布与同步流程稳定化：release plan 预检
 
 ## 状态
 
-实现和测试完成，等待 Review Gate 与用户确认提交。
+实现和验证完成，等待 Review Gate 与用户确认提交。
 
 ## 目标
 
-- 补齐 `docs/contracts/parent.md`。
-- 更新 `docs/contracts/pet.md`、`docs/contracts/homework.md`、`docs/contracts/diary.md` 中学生端主链路字段。
-- 在契约索引中登记 parent 契约。
-- 加固 `buddy-server/tests/api.test.ts` 对学生端与家长侧响应字段的断言。
-- 优先不改运行时代码；如果测试暴露真实缺口，再最小修复后端。
+- 给 `tools/release-sync.mjs` 增加 `--plan`。
+- `--plan` 只读展示 root/client/server 的路径、分支、状态、最新提交、远端对齐、sync/check 命令。
+- 更新 release smoke checklist。
 
 ## 允许文件
 
-- `buddy-server/tests/api.test.ts`
-- `docs/contracts/README.md`
-- `docs/contracts/pet.md`
-- `docs/contracts/homework.md`
-- `docs/contracts/diary.md`
-- `docs/contracts/parent.md`
+- `tools/release-sync.mjs`
+- `docs/client/07-联调与测试/release-smoke-checklist.md`
 - `PLAN.md`
 - `docs/agent/CURRENT_TASK.md`
 - `docs/agent/HANDOFF.md`
 
 ## 验证
 
-- `buddy-server`: `bun test` 通过，57 pass / 0 fail，250 个断言。
+- `node --check tools/release-sync.mjs`：通过。
+- `node tools\release-sync.mjs --plan`：真实 PowerShell 权限下通过。
+- 当前 root 有本轮未提交改动，因此 `--plan` 正确显示 `Decision: blocked or needs review`。
 - 待 Review Gate。
