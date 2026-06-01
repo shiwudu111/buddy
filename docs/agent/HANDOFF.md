@@ -1,523 +1,109 @@
 # Buddy Agent Handoff
 
-## 2026-06-01 - Cloud Staging UTF-8 smoke 与客户端 API override 准备
+## 2026-06-01 - Agent 账本编码修复
 
-### 已完成确认
+### 本轮原因
 
-- Root 账本提交 `8854edd docs(agent): record cloud staging handoff` 已推送到远端 `main`。
-- UTF-8 cloud smoke 已真实发出请求并通过：register、login、create pet、dashboard、logs/events。
-- 测试中文宠物名 `云端小橘_1780319737005` create pet 返回正确，dashboard 返回正确。
-- dashboard `recent_events` 与 `/events?limit=20` 中文文案正常。
-- 上一次 `????` 判断为请求编码问题，不是后端真实存储问题。
-
-### 当前推进
-
-- 进入客户端临时 Cloud Staging API base override 验证阶段。
-- 默认本地开发地址必须保持 `http://localhost:3000/api/v1`。
-- 临时 override 只用于 Cocos 预览和后续手机测试，不作为正式生产配置。
-
-### 下一步验证
-
-- 在 `buddy-client` 运行 `bunx tsc --noEmit --ignoreDeprecations 6.0`。
-- Cocos 默认状态不设置 override，确认仍访问本地 API。
-- Cocos 云端状态设置 `BUDDY_API_BASE_URL=http://101.133.130.137/api/v1`，确认注册、登录、创建中文宠物、dashboard、recent_events、日记中文显示。
-- 手机端如无法方便设置 storage，记录为后续“测试包配置入口”问题，不在本轮扩大。
-
-### 安全边界
-
-- 不记录 token、JWT_SECRET、数据库密码或 `.env.production` 内容。
-- 不改云服务器 systemd / Nginx / RDS / 安全组。
-- 不重置 RDS。
-- 不修改 server 业务逻辑。
-
-### 2026-06-01 CORS 与 Cocos 云端验收结果
-
-- 云端 `ALLOWED_ORIGINS` 已包含 `http://localhost:7456` 与 `http://127.0.0.1:7456`。
-- `buddy-server` 重启后已监听 3000，Cocos 预览不再被 CORS 拦截。
-- Cocos 预览中 `BUDDY_API_BASE_URL=http://101.133.130.137/api/v1` 已验证生效。
-- 云端注册、登录、创建中文宠物、dashboard、recent_events、events 中文返回正常。
-- 背包使用每日基础口粮通过，事件列表出现 feed 事件。
-- 作业图片上传、语文作业提交、奖励发放、作业状态和历史刷新通过。
-
-### 后续 Backlog
-
-- 修复基础口粮事件文案写死“小橘”的问题。
-- 统一 `/events` feed detail 的中文展示，避免暴露 `normal meal_box` 等技术字段。
-- 单独复现登录 401 后是否仍会进入 Main；如果成立，修复登录失败跳转逻辑。
-- 手机端如无法方便设置 storage，需要做测试包 API base 配置入口。
-
-2026-05-31 交接：Cloud Staging V1 最小云端后端环境已跑通
-当前结论
-
-buddy-server 已从 WSL 本地运行维护模式，推进到可公网访问的 Cloud Staging V1。当前阶段目标已达成：云端 API 有稳定公网入口，RDS PostgreSQL 已接通，Prisma 迁移已完成，systemd 常驻服务已启动，Nginx 已完成 80 端口反向代理，MVP 后端 smoke 主链路已通过。
-
-云端环境
-云厂商：阿里云。
-服务器形态：轻量应用服务器，Ubuntu 24.04。
-公网入口：http://101.133.130.137/
-后端服务目录：
-releases：/opt/buddy-server/releases
-current：/opt/buddy-server/current
-env：/opt/buddy-server/shared/.env.production
-运行用户：buddy
-systemd 服务：buddy-server.service
-本机服务端口：127.0.0.1:3000
-公网访问链路：80 -> Nginx -> 127.0.0.1:3000
-目前不要开放公网端口：
-3000
-5432
-RDS 状态
-数据库：阿里云 RDS PostgreSQL 16。
-数据库名：buddy_staging
-应用账号：buddy_app
-RDS 内网地址：pgm-uf6089rqyn35u0ow.pg.rds.aliyuncs.com
-端口：5432
-轻量服务器与 RDS 已通过“内网互通”打通。
-RDS 白名单已加入轻量服务器私网 IP：172.24.18.129/32
-服务器侧 psql 已验证能连接 RDS。
-Git / Release 状态
-server 仓库：buddy-server
-当前部署分支：deploy/cloud-staging-v1
-当前云端 release 已对齐到提交：
-b1c400a fix(prisma): make homework date migration replayable
-该提交修复了 20260331_homework_date_unique migration 在空库重放时 Homework.date 字段不存在的问题。
-关键修复：在 migration 中加入：
-ALTER TABLE "Homework" ADD COLUMN IF NOT EXISTS "date" TEXT NOT NULL DEFAULT '';
-云端已重新 clone 最新 release，bun install、prisma migrate deploy、prisma generate 均通过。
-已完成验证
-基础部署验证
-systemctl status buddy-server：服务运行中。
-curl http://127.0.0.1:3000/：通过。
-curl http://101.133.130.137/：通过。
-返回：
-{"status":"ok","message":"Buddy API Server"}
-Cloud Smoke V1 已通过项
-GET / 健康检查通过。
-POST /api/v1/auth/register：服务器本机 Linux curl 验证通过。
-POST /api/v1/auth/login：通过。
-GET /api/v1/auth/me：通过。
-POST /api/v1/pets：通过。
-GET /api/v1/pets/:petId/dashboard：通过。
-GET /api/v1/pets/:petId/logs?days=7：通过。
-GET /api/v1/homeworks/status：通过。
-POST /api/v1/pets/:petId/inventory/use：通过。
-使用基础粮食后再次 dashboard，foods=[]、inventory=[]，且 dailyBasicFood.granted=false，符合预期。
-已验证业务点
-新用户可注册、登录、获取 auth/me。
-新用户可创建宠物。
-首次 dashboard 会触发每日基础粮食：
-meal_box normal ×1
-foods 和 inventory 均可见。
-使用 meal_box normal 成功。
-使用后库存清空。
-当天再次 dashboard 不重复发基础粮食。
-timeContext 正常返回：
-serverNow
-timezone
-localDate
-dayPeriod
-lastSeenAt
-minutesSinceLastSeen
-returnGreeting
-homeworks/status 返回正常：
-dailyReward.limit=3
-used=0
-remaining=3
-四科 rewardAvailable=true
-当前已知问题 / 非阻塞项
-PowerShell 中文显示/请求存在编码问题
-创建宠物时中文名显示为 ????。
-logs / recent_events 中文在 PowerShell 输出中显示乱码。
-当前判断更可能是 PowerShell 输出或请求编码问题，不先判定为后端存储问题。
-后续需要用客户端或 UTF-8 bytes 请求单独验证中文入库和中文日志展示。
-PowerShell curl JSON 转义容易导致注册 500
-Windows curl.exe -d "{\"...\"}" 会导致后端 JSON parse error。
-推荐后续 smoke 使用 Invoke-RestMethod 或 JSON 文件方式。
-服务器 Linux curl 验证 register 正常。
-测试过程中 token / JWT_SECRET 曾暴露在对话里
-当前不影响 smoke 继续。
-阶段收口后建议统一轮换云端 JWT_SECRET，然后 systemctl restart buddy-server，使旧 token 失效。
-不要把 .env.production、数据库密码、JWT_SECRET 写入文档。
-root 用户查看 buddy clone 的 Git 仓库会出现 dubious ownership
-不影响服务。
-查看当前提交应使用：
-runuser -u buddy -- bash -lc 'cd /opt/buddy-server/current && git log --oneline -1'
-常用运维命令
-systemctl status buddy-server
-systemctl restart buddy-server
-journalctl -u buddy-server -n 100 --no-pager
-curl http://127.0.0.1:3000/
-curl http://101.133.130.137/
-readlink -f /opt/buddy-server/current
-runuser -u buddy -- bash -lc 'cd /opt/buddy-server/current && git log --oneline -1'
-下一步建议
-先轮换云端 JWT_SECRET，重启 buddy-server。
-用 UTF-8 方式做一次中文 smoke：
-中文宠物名
-中文 logs 文案
-客户端显示
-开始客户端切云端 API 的最小验证：
-API base 暂时指向 http://101.133.130.137
-真机或模拟器访问云端后端
-继续推进备案和域名：
-后续目标：https://api-staging.<域名>.cn
-暂不做 HTTPS，等域名解析和备案流程进一步完成后再配置。
-## 2026-05-29 手动操作记录：cloud staging 准备
-
-操作者：用户手动执行，Codex 未参与。
-
-已做：
-- 在 buddy-server 创建分支 deploy/cloud-staging-v1。
-- 准备处理云端部署相关内容：CORS 环境变量、.env.production.example、部署文档、smoke 文档。
-- 暂未修改业务接口。
-
-不要碰：
-- buddy-client 业务代码。
-- pet / inventory / homework / diary 主链路。
-- 已完成的每日基础粮食和 timeContext 逻辑。
-
-下一步：
-- 先检查 git status。
-- 只在 buddy-server 内推进云端部署准备。
-
-## 2026-05-29 - 全链路测试与下一版本规划
-
-### 触发原因
-
-用户要求全链路测试一次，没有问题则进入下一项。
-
-### 全链路测试结果
-
-- `node tools\release-sync.mjs --plan`：通过，三仓库 clean、remote aligned、Decision 为 ready。
-- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
-- `buddy-server`: `bun test` 通过，57 pass / 0 fail，250 个断言。
-- `root`: `node tools\smoke-mvp-flow.mjs` 通过，12 个步骤 PASS。
-- client WSL sync/check 通过：`tmp_absent`、`docs_absent`。
-- server WSL sync/check 通过：无 pending migration，Prisma generate 成功，服务健康。
-
-### 当前进入任务
-
-第 6 项：版本提交规划 / 下一版本大目标。
-
-### 用户指定的下一版本三目标
-
-1. 服务器云端迁移。
-2. 客户端可提交，手机端可以体验测试，支持热更新。
-3. 学生端主链路体验优化，目标满足用户一日内完整体验。
-
-### 目标一当前推进
-
-- 已开始“服务器云端迁移方案与环境清单”。
-- 本轮只写 root 文档，不改 `buddy-server` 运行代码。
-- 关键风险：当前 server CORS 在 `src/index.ts` 硬编码本地来源，云端迁移前应改为环境变量配置。
-
-### 边界
-
-- 本轮只写 root 文档。
-- 不改 `buddy-client`。
-- 不改 `buddy-server`。
-- 不做新功能。
-
----
-
-## 2026-05-29 - 发布与同步流程稳定化：release plan 预检
-
-### 触发原因
-
-第 4 项后端一致性与测试加固已提交、推送并完成 server WSL sync/check。用户要求进入第 5 项。
-
-### 本轮目标
-
-- 给 `tools/release-sync.mjs` 增加只读 `--plan`。
-- 让 release 前状态检查标准化：三仓库路径、分支、状态、最新提交、远端对齐、sync/check 命令一次输出。
-- 更新 Release Smoke Checklist，把 `--plan` 放到标准流程第一步。
-
-### 当前边界
-
-- 不改 `buddy-client`。
-- 不改 `buddy-server`。
-- 不提交、不推送、不同步，除非用户确认。
-- `--plan` 不执行写操作。
-
-### 待验证
-
-- `node --check tools/release-sync.mjs` 已通过。
-- `node tools\release-sync.mjs --plan` 已在真实 PowerShell 权限下通过。
-- 当前 root 有本轮未提交改动，因此 `--plan` 正确显示 `Decision: blocked or needs review`。
-- 三仓库 `git status -sb`。
-
-### 本轮已完成
-
-- `tools/release-sync.mjs` 新增 `--plan`。
-- `--plan` 使用只读 git 检查 root/client/server 的路径、分支、状态、最新提交和远端对齐。
-- `--plan` 输出对应 runtime repo 的 sync/check 命令。
-- Release Smoke Checklist 已把 `--plan` 放入标准流程第一步。
-
----
-
-## 2026-05-29 - 后端一致性与测试加固：学生端与家长侧响应契约
-
-### 触发原因
-
-第 3 项学生端主链路体验 polish 已提交、推送并同步 WSL。用户要求进入第 4 项：后端一致性与测试加固。
-
-### 本轮目标
-
-- 补齐学生端与家长侧接口契约，降低 UI 与后端字段理解偏差。
-- 加固 server 集成测试，对 dashboard、作业奖励、库存使用、日记事件、`/parent/pet/:childId` 和 `/parent/report/weekly` 的核心字段做稳定断言。
-
-### 当前边界
-
-- 不改 `buddy-client`。
-- 不新增接口。
-- 不做 migration。
-- 不改变认证方式。
-- 优先只补文档和测试；如果测试暴露后端真实缺口，再最小修运行时代码。
-
-### 待验证
-
-- `buddy-server`: `bun test` 已通过，57 pass / 0 fail，250 个断言。
-- 三仓库 `git status -sb`。
-
-### 本轮已完成
-
-- 新增 `docs/contracts/parent.md`。
-- 更新 `docs/contracts/README.md`。
-- 更新 `docs/contracts/pet.md`、`docs/contracts/homework.md`、`docs/contracts/diary.md`。
-- 加固 `buddy-server/tests/api.test.ts` 学生端与家长侧响应字段断言。
-- 未修改 `buddy-client`。
-- 未修改后端运行时代码。
-
----
-
-## 2026-05-29 - 学生端主链路体验 polish
-
-### 触发原因
-
-root/client 已推送完成后，按后续规划进入第 3 项：学生端主链路体验 polish。
-
-### 本轮已完成
-
-- `MainController.ts` 优化作业奖励反馈：奖励进入背包、使用后可在日记查看记录。
-- `MainController.ts` 优化背包使用反馈：使用成功后提示宠物状态已刷新，并引导查看日记。
-- `MainController.ts` 优化日记同步失败提示：区分缓存记录和网络异常，避免误判为同步成功。
-- `MainBagPanel.ts` 将口粮选择表头从技术字段改为中文。
-- `MainBagPanel.ts` 优化无可用口粮时的作业奖励引导。
-
-### 验证结果
-
-- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
-- `root`: `node tools/smoke-mvp-flow.mjs` 通过，12 个步骤 PASS。
-
-### 当前未做
-
-- 未修改 `buddy-server`。
-- 未修改 API 契约。
-- 未提交本轮 client/root 改动。
-- 未推送。
-- 未运行 WSL 同步。
-- 待用户 Cocos 人工复验学生端作业、背包、日记主链路。
-
-### 下一步
-
-1. Review Gate 检查 root/client/server status 和 diff。
-2. 用户 Cocos 复验。
-3. 通过后分仓提交 client 和 root。
-4. 推送后运行 client WSL sync/check。
-
----
-
-## 2026-05-29 - 家长中心三栏 section 拆分
-
-### 触发原因
-
-第 1 项主链路回归资产固化完成并提交推送后，按后续规划进入第 2 项：继续拆 `MainController.ts`。
-
-### 本轮已完成
-
-- 新增 `ParentSectionPanels.ts`，承接家长中心三栏内部渲染：宠物成长、成长洞察、学习分析。
-- 新增 `ParentSectionPanels.ts.meta`。
-- `MainController.ts` 改为向 section 模块传入数据、格式化函数和点击回调。
-- 保持 UI 行为、交互规则和 API 契约不变。
-
-### 验证结果
-
-- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
-
-### 当前未做
-
-- 未修改 `buddy-server`。
-- 未修改 API 契约。
-- 未提交本轮 client/root 改动。
-- 未推送。
-- 未运行 WSL 同步。
-- 待用户 Cocos 人工复验家长中心三栏。
-
-### 下一步
-
-1. Review Gate 检查三仓库状态和 diff。
-2. 用户 Cocos 复验。
-3. 通过后分仓提交 client 和 root。
-
----
-
-## 2026-05-29 - 主链路回归资产固化
-
-### 触发原因
-
-用户确认后续规划顺序，并要求按规划执行后续开发。本轮执行第 1 项：主链路回归资产固化。
-
-### 本轮已完成
-
-- 重写 MVP Cocos UI 真实点击验收清单为可读中文版本。
-- 新增 Release Smoke Checklist，固化 root/client/server status、client tsc、server test、WSL sync/check、MVP smoke、Cocos 人工验收记录模板。
-- 增强 `tools/smoke-mvp-flow.mjs` 的失败定位：输出当前步骤、Base URL、WSL smoke 推荐命令。
-
-### 边界
-
-- 未修改 client/server 业务代码。
-- 未修改 API 契约。
-- Windows 是研发修改调试区。
-- WSL 是最终运行维护和 smoke 验证区。
-
-### 下一步
-
-1. 运行 smoke 验证。
-2. Review Gate 检查三仓库状态。
-3. 用户确认后提交 root。
-4. 下一轮进入第 2 项：继续拆 `MainController.ts`。
-
----
-
-## 2026-05-28 - 家长中心组件化拆分
-
-### 触发原因
-
-用户确认先提交 root 账本文档，然后开始下一轮开发任务：家长中心组件化拆分。
-
-### 本轮已完成
-
-- root 账本文档已先行提交：`94048d8 docs(agent): repair task ledger`。
-- 新增 `buddy-client/assets/scripts/ui/main/parent/ParentDashboardTypes.ts`，集中家长中心类型。
-- 新增 `buddy-client/assets/scripts/ui/main/parent/ParentColumnLayout.ts`，集中三栏宽度、位置和动画进度算法。
-- 新增 `buddy-client/assets/scripts/ui/main/parent/ParentDashboardPanel.ts`，承接家长中心顶层面板、顶部摘要区和三栏编排。
-- `MainController.ts` 保留数据请求和细节渲染，主面板编排改为调用新模块。
-- 新增三个 Cocos TypeScript `.meta` 文件。
-
-### 验证结果
-
-- `buddy-client`: `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
-
-### 当前未做
-
-- 未修改 `buddy-server`。
-- 未修改 API 契约。
-- 未新增家长侧功能。
-- 未提交本轮 client/root 改动。
-- 未推送。
-- 未运行 WSL 同步。
-- 待用户 Cocos 人工复验家长中心三栏点击、拉伸/压缩、刷新、退出。
-
-### 下一步
-
-1. Review Gate：检查 root/client/server status 和 diff。
-2. 用户 Cocos 复验。
-3. 通过后分仓提交：client -> root。
-
----
-
-## 2026-05-28 - Agent 账本编码修复
-
-### 触发原因
-
-用户要求开始下一轮任务。按 Buddy 流程执行 State Refresh 后发现：
-
-- root `E:\buddy`：`main`，对齐 `origin/main`，clean。
-- client `E:\buddy\buddy-client`：`develop`，对齐 `origin/develop`，clean。
-- server `E:\buddy\buddy-server`：`develop`，对齐 `origin/develop`，clean。
-- `PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/HANDOFF.md` 出现乱码。
-
-由于任务账本是 Coordinator 的事实来源，账本乱码会造成 PLAN 失真风险。本轮暂停功能开发，先修复账本。
+进入下一阶段前执行 State Refresh，发现 `PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/HANDOFF.md` 读取结果出现明显乱码。由于这些文件是 Buddy Coordinator 的事实来源，若不先修复，会导致后续任务目标失真。
 
 ### 本轮处理
 
 - 重写 `PLAN.md` 为可读中文。
 - 重写 `docs/agent/CURRENT_TASK.md` 为可读中文。
 - 重写 `docs/agent/HANDOFF.md` 为可读中文。
-- 保留关键交接事实，不逐字恢复已经乱码的历史流水。
+- 仅保留当前阶段需要的关键事实、边界和下一阶段建议。
+- 未修改 `buddy-client`。
+- 未修改 `buddy-server`。
+- 未触碰云服务器、RDS、Nginx、systemd。
+- 未提交、未推送。
 
-### 当前已完成事实
+## 最近已完成阶段：Cloud Staging 客户端接入验证
 
-- Agent 架构文档与可见进度规则已建立。
-- Main 日记事件闭环已完成。
-- MVP API / 服务层冒烟链路已固化。
-- Cocos 项目导入与资源冲突已收口。
-- UI 主链路收口已完成：
-  - Main 聊天入口。
-  - 家长账号进入家长中心。
-  - 家长绑定孩子。
-  - 家长查看孩子宠物。
-  - 家长查看周报。
-  - 家长中心三栏主视觉。
-  - 三栏点击拉伸/压缩交互。
-- 用户已确认 Cocos 人工验收通过。
-- 三仓库已提交并推送：
-  - root `main`: `f9055b2 docs(agent): record mvp ui handoff`
-  - client `develop`: `3d8bb14 feat(main): refine parent dashboard flow`
-  - server `develop`: `7bfbda1 feat(parent): expose child status details`
-- Release Smoke 已通过：
-  - client WSL check 正常。
-  - server health check 返回 `{"status":"ok","message":"Buddy API Server"}`。
+### Root / Client 提交
 
-### 当前未做
+- root `main`: `78cd153 docs(agent): record cloud client override validation`
+- client `develop`: `6dc564d feat(api): add cloud staging base override`
+- server `deploy/cloud-staging-v1`: `b1c400a fix(prisma): make homework date migration replayable`
 
-- 未修改 `buddy-client/` 业务代码。
-- 未修改 `buddy-server/` 业务代码。
-- 未提交。
-- 未推送。
-- 未运行 WSL 同步。
+### 关键结论
 
-### 下一轮建议
+- 客户端默认 API base 仍为 `http://localhost:3000/api/v1`。
+- 客户端支持临时 override：
+  - `globalThis.BUDDY_API_BASE_URL`
+  - `localStorage["BUDDY_API_BASE_URL"]`
+- Cocos 预览中设置 `BUDDY_API_BASE_URL=http://101.133.130.137/api/v1` 后，请求已成功打到云端。
+- Cloud CORS 已允许：
+  - `http://localhost:7456`
+  - `http://127.0.0.1:7456`
+- Cocos 预览本地模式通过。
+- Cocos 预览云端模式通过。
+- UTF-8 中文宠物名、dashboard、recent_events、events 均正常。
+- 背包使用每日基础口粮通过。
+- 作业图片上传、语文作业提交、奖励进入背包、作业状态和历史刷新通过。
 
-优先执行“家长中心组件化拆分任务”。
+### 云端事实
 
-原因：
+- 公网入口暂为 `http://101.133.130.137/`。
+- API base 暂为 `http://101.133.130.137/api/v1`。
+- systemd 服务：`buddy-server.service`。
+- Nginx 80 端口反代到 `127.0.0.1:3000`。
+- 不开放公网 3000。
+- 不开放公网 5432。
+- RDS PostgreSQL 16 通过内网互通连接。
 
-- 上一轮家长中心 UI 已经通过人工验收，但大量逻辑仍集中在 `MainController.ts`。
-- 如果继续直接在 `MainController.ts` 堆 UI，会让后续视觉调整、数据洞察、父母端功能都变慢。
-- 组件化拆分不应改变用户可见行为，适合作为下一轮低风险结构任务。
+### 安全边界
 
-建议 Task Packet：
+- 不把 `.env.production`、数据库密码、JWT_SECRET、token 写入文档或提交。
+- 不重置 RDS。
+- 不轮换 JWT_SECRET，除非用户单独确认。
+- 不把 PowerShell 中文乱码直接判定为后端存储问题。
+- Windows `curl.exe -d "{\"...\"}"` 可能导致 JSON parse error；smoke 优先使用 Node、Invoke-RestMethod 或 JSON 文件。
 
-```text
-Task Name: 家长中心组件化拆分
-Goal: 将家长中心 UI 和三栏交互从 MainController.ts 中拆成独立模块，保持现有行为不变。
-Repos: buddy-client, root
-Allowed Files:
-  buddy-client/assets/scripts/ui/main/MainController.ts
-  buddy-client/assets/scripts/ui/main/parent/ParentDashboardPanel.ts
-  buddy-client/assets/scripts/ui/main/parent/ParentColumnLayout.ts
-  buddy-client/assets/scripts/ui/main/parent/ParentDashboardTypes.ts
-  root/PLAN.md
-  root/docs/agent/CURRENT_TASK.md
-  root/docs/agent/HANDOFF.md
-Out of Scope:
-  不改 server。
-  不改 API 契约。
-  不新增家长侧新功能。
-  不重做视觉风格。
-Validation:
-  buddy-client: bunx tsc --noEmit --ignoreDeprecations 6.0
-  Cocos 人工复验家长中心三栏点击、拉伸/压缩、刷新、退出。
-Commit Plan:
-  client develop：refactor(main): split parent dashboard panel
-  root main：docs(agent): record parent dashboard refactor handoff
-```
+## 当前 Backlog
 
-### 注意事项
+1. 基础口粮事件文案写死“小橘”。
+   - 当前宠物名为“星星”时，事件仍显示“记得照顾小橘哦”。
+   - 建议改为当前宠物名，或使用通用文案。
 
-- Windows 是研发修改调试区。
-- WSL 是最终运行维护和 smoke 验证区。
-- WSL 使用 mirrored networking；Windows 侧 localhost 失败时，应以 WSL 内 smoke 和 health check 为最终判断。
-- `buddy-client/.tmp/` 禁止提交。
-- Cocos 自动生成的 settings 变化需要单独判断，不能混入无关业务提交。
+2. `/events` feed detail 暴露技术字段。
+   - 例如：`使用了 1 份 normal meal_box`。
+   - 建议统一为中文可读文案，例如“使用了 1 份普通营养便当”。
+
+3. 登录 401 后可能仍进入 Main。
+   - 曾在 Cocos 控制台看到 `401 Unauthorized` 后出现 `LoadScene Main`。
+   - 需要后续单独复现；如果成立，修复登录失败跳转逻辑。
+
+4. 手机端测试包 API base 配置入口。
+   - 当前 override 适合 Cocos 预览和浏览器 localStorage。
+   - 手机端如果无法方便设置 storage，需要测试包配置入口。
+
+## 下一阶段建议任务
+
+Task Name: 云端事件文案一致性修复
+
+Goal:
+
+- 修复基础口粮事件文案写死“小橘”。
+- 统一 `/events` feed detail 的中文展示。
+- 保持 API 字段结构不变。
+- 不做数据库 migration。
+
+建议 Repo:
+
+- `buddy-server`
+- root 账本文档
+
+建议允许文件：
+
+- `buddy-server/src/routes/pet.ts` 或实际事件聚合/文案生成文件
+- `buddy-server/tests/api.test.ts`
+- `docs/contracts/diary.md` 如需补充文案约定
+- `PLAN.md`
+- `docs/agent/CURRENT_TASK.md`
+- `docs/agent/HANDOFF.md`
+
+建议验证：
+
+- `buddy-server`: `bun test`
+- 云端部署后 health check。
+- Cocos 预览 cloud override 下复验 dashboard、recent_events、events、背包使用。

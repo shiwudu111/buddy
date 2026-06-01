@@ -2,58 +2,76 @@
 
 ## 当前任务
 
-服务器云端迁移方案与环境清单。
+Agent 账本编码修复与下一阶段任务重置。
 
-下一版本三大目标已经明确。
-当前进入目标一的第一步：完成云端迁移方案和环境清单，并记录 server 云端配置前置改造结果。server CORS/env 配置已在 buddy-server 的 deploy/cloud-staging-v1 分支完成并推送；root 本轮只提交文档和账本，不再修改 server 运行代码。
+本轮只修复父级 root 账本文档，不改 `buddy-client` 或 `buddy-server` 业务代码，不碰云服务器、RDS、Nginx、systemd，不提交、不推送，等待用户确认。
 
-## Task Packet
+## 当前事实
+
+- root `main`、client `develop`、server `deploy/cloud-staging-v1` 当前均已对齐远端且工作区 clean。
+- Cloud Staging V1 最小云端后端环境已跑通。
+- 公网 API 入口暂为 `http://101.133.130.137/`。
+- `buddy-server` 已部署在阿里云轻量应用服务器。
+- RDS PostgreSQL 16 已通过内网互通连接。
+- systemd 服务 `buddy-server.service` 已运行。
+- Nginx 80 端口反代到 `127.0.0.1:3000`。
+- server 当前云端部署关键提交为 `b1c400a fix(prisma): make homework date migration replayable`。
+- UTF-8 cloud smoke 已确认：register、login、create pet、dashboard、logs/events 中文链路正常。
+- 客户端 Cloud Staging API base override 已完成、验证、提交并推送。
+- Cocos 预览本地和云端两种模式均已通过人工验证。
+- Cloud CORS 已允许 `http://localhost:7456` 与 `http://127.0.0.1:7456`。
+
+## 本轮 Task Packet
 
 ```text
-Task Name: 服务器云端迁移方案与环境清单
-Goal: 明确 buddy-server 云端迁移路线、环境变量、机器环境、部署/健康检查/回滚要求。
+Task Name: Agent 账本编码修复与下一阶段任务重置
+Goal: 恢复 root 账本为可读中文，并明确下一阶段开发目标，避免 PLAN 失真。
 Repos: root
 Allowed Files:
-  root/docs/agent/NEXT_VERSION_PLAN.md
-  root/docs/server/CLOUD-MIGRATION-PLAN.md
-  root/PLAN.md
-  root/docs/agent/CURRENT_TASK.md
-  root/docs/agent/HANDOFF.md
+  PLAN.md
+  docs/agent/CURRENT_TASK.md
+  docs/agent/HANDOFF.md
 Out of Scope:
-  不改 buddy-client。
-  不改 buddy-server。
-  不做新功能。
-  不提交、不推送，除非用户确认。
-Backend Impact: 无。
-Client Impact: 无。
-Contract Impact: 无。
+  不改 buddy-client
+  不改 buddy-server
+  不碰云服务器 / RDS / Nginx / systemd
+  不做新业务功能
+  不提交、不推送，除非用户确认
+Backend Impact: 无
+Client Impact: 无
+Contract Impact: 无
 Validation:
   root/client/server git status -sb
-  文档内容自检：迁移路线、环境变量、部署命令、验收门槛和风险是否清楚
-Commit Plan: 本轮先不提交，等用户确认。
+  git diff --stat
+  人工检查三份文档可读
+Commit Plan:
+  等用户确认后再提交 root
+Risks:
+  旧账本曾出现乱码，后续每轮任务开始必须先读账本并确认可读。
 ```
 
-## 本轮完成项
+## 下一阶段建议
 
-- 全链路测试已通过：
-  - `node tools\release-sync.mjs --plan`：ready for release actions。
-  - client `bunx tsc --noEmit --ignoreDeprecations 6.0`：通过。
-  - server `bun test`：57 pass / 0 fail，250 个断言。
-  - root `node tools\smoke-mvp-flow.mjs`：12 个步骤 PASS。
-  - client WSL sync/check：`tmp_absent`、`docs_absent`。
-  - server WSL sync/check：migrate 无 pending，generate 成功，服务健康。
-- 已新增下一版本规划文档，围绕三个目标：
-  - 服务器云端迁移。
-  - 客户端可提交，手机端可以体验测试，支持热更新。
-  - 学生端主链路体验优化，目标满足用户一日内完整体验。
-- 已新增 `docs/server/CLOUD-MIGRATION-PLAN.md`，记录云端迁移方案与环境清单。
-- buddy-server 云端配置前置改造已完成：
-  - 分支：deploy/cloud-staging-v1。
-  - 提交：8d0b7a5 chore(deploy): add cloud env configuration。
-  - 内容：CORS 改为 ALLOWED_ORIGINS 环境变量驱动；.env.example 补充 ALLOWED_ORIGINS / PUBLIC_API_BASE_URL / LOG_LEVEL；新增 .env.production.example。
-  - 验证：buddy-server bun test 57/57 通过；GET / 健康检查通过。
+下一阶段建议做一个小闭环任务：云端事件文案一致性修复。
 
-## 下一步
+原因：
 
-1. Review Gate 检查三仓库状态和 diff。
-2. 用户确认后提交 root。
+- 这是 Cloud Staging + Cocos 人工验收直接暴露的问题。
+- 范围小，适合作为云端后续开发的第一轮稳定任务。
+- 可以同时验证 server 变更、测试、云端部署、Cocos 复验的节奏。
+
+建议目标：
+
+1. 基础口粮事件文案不要写死“小橘”，改为当前宠物名或通用文案。
+2. `/events` feed detail 不再暴露 `normal meal_box` 等技术字段，改为中文可读文案。
+3. 补 server 测试，确认 dashboard `recent_events` 与 `/events` 文案一致。
+4. 不改 API 契约字段结构，不做数据库 migration。
+
+## 当前不做
+
+- 不做 HTTPS。
+- 不做域名切换。
+- 不做手机端测试包配置入口。
+- 不处理登录 401 后是否进入 Main 的客户端问题。
+- 不轮换 JWT_SECRET。
+- 不提交密钥、token、`.env.production` 或数据库密码。
