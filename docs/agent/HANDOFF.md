@@ -17,6 +17,42 @@
 - 未触碰云服务器、RDS、Nginx、systemd。
 - 未提交、未推送。
 
+## 2026-06-01 - 云端事件文案一致性修复
+
+### 本轮原因
+
+Cloud Staging + Cocos 人工验收发现两个用户可见文案问题：
+
+- 基础口粮事件写死“小橘”。
+- `/events` feed detail 暴露 `normal meal_box`、`premium logic_cookie` 等技术字段。
+
+### 本轮处理
+
+- `buddy-server/src/routes/pet.ts`
+  - 新增食品质量中文映射。
+  - 复用作业奖励食品名称映射生成 feed 事件文案。
+  - 基础口粮文案改为“今日基础口粮已送达，记得照顾宠物哦。”
+- `buddy-server/tests/api.test.ts`
+  - 更新 diary logs 断言。
+  - 扩大 persistent events 查询 limit，避免被历史事件窗口影响。
+  - 增加 feed 事件不包含内部技术字段的断言。
+
+### 验证结果
+
+- 已同步到本机 WSL 运行区并重启本地 server。
+- WSL 本地 server health check 通过。
+- `buddy-server`: `bun test` 通过，57 pass / 0 fail，253 个断言。
+
+### 未做
+
+- 未修改 `buddy-client`。
+- 未修改数据库 schema。
+- 未做 Prisma migration。
+- 未改 API 字段结构。
+- 未碰云服务器、RDS、Nginx、systemd。
+- 未部署云端。
+- 未提交、未推送。
+
 ## 最近已完成阶段：Cloud Staging 客户端接入验证
 
 ### Root / Client 提交

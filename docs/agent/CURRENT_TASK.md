@@ -1,21 +1,22 @@
 # CURRENT TASK
 
-## 2026-06-01 当前任务：Agent 账本编码修复与下一阶段任务重置
+## 2026-06-01 当前任务：云端事件文案一致性修复
 
 ### 任务目标
 
-恢复父级 root 账本文档为可读中文，并明确下一阶段开发目标，避免后续任务因为 PLAN / HANDOFF 乱码而失真。
+修复 Cloud Staging + Cocos 验收暴露的事件文案问题：基础口粮文案不再写死“小橘”，`/events` feed detail 不再暴露技术字段。
 
 ### 允许文件
 
 - `PLAN.md`
 - `docs/agent/CURRENT_TASK.md`
 - `docs/agent/HANDOFF.md`
+- `buddy-server/src/routes/pet.ts`
+- `buddy-server/tests/api.test.ts`
 
 ### 不允许
 
 - 不改 `buddy-client`。
-- 不改 `buddy-server`。
 - 不碰云服务器、RDS、Nginx、systemd。
 - 不轮换 JWT_SECRET。
 - 不提交 `.env.production`、token、JWT_SECRET、数据库密码。
@@ -37,27 +38,22 @@
 - Cocos 预览本地模式和云端模式均已人工验证通过。
 - Cloud CORS 已允许 `http://localhost:7456` 与 `http://127.0.0.1:7456`。
 
+## 本轮完成
+
+- `buddy-server/src/routes/pet.ts` 增加食品质量和食品名称中文文案映射。
+- feed 事件 detail 改为中文可读文案。
+- 基础口粮事件 detail 改为通用宠物文案。
+- `buddy-server/tests/api.test.ts` 补充持久事件文案断言。
+- 已同步 Windows server 代码到本机 WSL 运行区，并重启本地 server。
+- `buddy-server`: `bun test` 通过，57 pass / 0 fail。
+
 ## 当前遗留问题
 
-1. 基础口粮事件文案仍写死“小橘”，应改为当前宠物名或通用文案。
-2. `/events` 的 feed detail 仍暴露 `normal meal_box` 等技术字段，应改为中文可读文案。
-3. 曾出现过登录 401 后仍 `LoadScene Main` 的现象，需要后续单独复现和修复。
-4. 手机端如果无法方便设置 storage，需要后续做测试包 API base 配置入口。
+1. 曾出现过登录 401 后仍 `LoadScene Main` 的现象，需要后续单独复现和修复。
+2. 手机端如果无法方便设置 storage，需要后续做测试包 API base 配置入口。
 
-## 下一阶段建议
+## 下一步建议
 
-下一阶段建议进入：云端事件文案一致性修复。
-
-建议边界：
-
-- 优先改 `buddy-server`。
-- 不改数据库 schema，不做 Prisma migration。
-- 不改 API 字段结构。
-- 不改认证方式。
-- 如需客户端映射文案，只做最小兼容，不扩大 UI。
-
-建议验证：
-
-- `buddy-server`: `bun test`
-- 云端部署后 health check。
-- Cocos 预览 cloud override 下复验 dashboard、recent_events、events、背包使用。
+- Review Gate：检查 root/server diff 和状态。
+- 用户确认后分仓提交 root 与 server。
+- 后续如需云端生效，再走 server 部署/健康检查/Cocos cloud override 复验。
