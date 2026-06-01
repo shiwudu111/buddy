@@ -1,4 +1,51 @@
 # Buddy Agent Handoff
+
+## 2026-06-01 - Cloud Staging UTF-8 smoke 与客户端 API override 准备
+
+### 已完成确认
+
+- Root 账本提交 `8854edd docs(agent): record cloud staging handoff` 已推送到远端 `main`。
+- UTF-8 cloud smoke 已真实发出请求并通过：register、login、create pet、dashboard、logs/events。
+- 测试中文宠物名 `云端小橘_1780319737005` create pet 返回正确，dashboard 返回正确。
+- dashboard `recent_events` 与 `/events?limit=20` 中文文案正常。
+- 上一次 `????` 判断为请求编码问题，不是后端真实存储问题。
+
+### 当前推进
+
+- 进入客户端临时 Cloud Staging API base override 验证阶段。
+- 默认本地开发地址必须保持 `http://localhost:3000/api/v1`。
+- 临时 override 只用于 Cocos 预览和后续手机测试，不作为正式生产配置。
+
+### 下一步验证
+
+- 在 `buddy-client` 运行 `bunx tsc --noEmit --ignoreDeprecations 6.0`。
+- Cocos 默认状态不设置 override，确认仍访问本地 API。
+- Cocos 云端状态设置 `BUDDY_API_BASE_URL=http://101.133.130.137/api/v1`，确认注册、登录、创建中文宠物、dashboard、recent_events、日记中文显示。
+- 手机端如无法方便设置 storage，记录为后续“测试包配置入口”问题，不在本轮扩大。
+
+### 安全边界
+
+- 不记录 token、JWT_SECRET、数据库密码或 `.env.production` 内容。
+- 不改云服务器 systemd / Nginx / RDS / 安全组。
+- 不重置 RDS。
+- 不修改 server 业务逻辑。
+
+### 2026-06-01 CORS 与 Cocos 云端验收结果
+
+- 云端 `ALLOWED_ORIGINS` 已包含 `http://localhost:7456` 与 `http://127.0.0.1:7456`。
+- `buddy-server` 重启后已监听 3000，Cocos 预览不再被 CORS 拦截。
+- Cocos 预览中 `BUDDY_API_BASE_URL=http://101.133.130.137/api/v1` 已验证生效。
+- 云端注册、登录、创建中文宠物、dashboard、recent_events、events 中文返回正常。
+- 背包使用每日基础口粮通过，事件列表出现 feed 事件。
+- 作业图片上传、语文作业提交、奖励发放、作业状态和历史刷新通过。
+
+### 后续 Backlog
+
+- 修复基础口粮事件文案写死“小橘”的问题。
+- 统一 `/events` feed detail 的中文展示，避免暴露 `normal meal_box` 等技术字段。
+- 单独复现登录 401 后是否仍会进入 Main；如果成立，修复登录失败跳转逻辑。
+- 手机端如无法方便设置 storage，需要做测试包 API base 配置入口。
+
 2026-05-31 交接：Cloud Staging V1 最小云端后端环境已跑通
 当前结论
 
