@@ -1,5 +1,120 @@
 # Buddy Agent Handoff
+2026-05-31 交接：Cloud Staging V1 最小云端后端环境已跑通
+当前结论
 
+buddy-server 已从 WSL 本地运行维护模式，推进到可公网访问的 Cloud Staging V1。当前阶段目标已达成：云端 API 有稳定公网入口，RDS PostgreSQL 已接通，Prisma 迁移已完成，systemd 常驻服务已启动，Nginx 已完成 80 端口反向代理，MVP 后端 smoke 主链路已通过。
+
+云端环境
+云厂商：阿里云。
+服务器形态：轻量应用服务器，Ubuntu 24.04。
+公网入口：http://101.133.130.137/
+后端服务目录：
+releases：/opt/buddy-server/releases
+current：/opt/buddy-server/current
+env：/opt/buddy-server/shared/.env.production
+运行用户：buddy
+systemd 服务：buddy-server.service
+本机服务端口：127.0.0.1:3000
+公网访问链路：80 -> Nginx -> 127.0.0.1:3000
+目前不要开放公网端口：
+3000
+5432
+RDS 状态
+数据库：阿里云 RDS PostgreSQL 16。
+数据库名：buddy_staging
+应用账号：buddy_app
+RDS 内网地址：pgm-uf6089rqyn35u0ow.pg.rds.aliyuncs.com
+端口：5432
+轻量服务器与 RDS 已通过“内网互通”打通。
+RDS 白名单已加入轻量服务器私网 IP：172.24.18.129/32
+服务器侧 psql 已验证能连接 RDS。
+Git / Release 状态
+server 仓库：buddy-server
+当前部署分支：deploy/cloud-staging-v1
+当前云端 release 已对齐到提交：
+b1c400a fix(prisma): make homework date migration replayable
+该提交修复了 20260331_homework_date_unique migration 在空库重放时 Homework.date 字段不存在的问题。
+关键修复：在 migration 中加入：
+ALTER TABLE "Homework" ADD COLUMN IF NOT EXISTS "date" TEXT NOT NULL DEFAULT '';
+云端已重新 clone 最新 release，bun install、prisma migrate deploy、prisma generate 均通过。
+已完成验证
+基础部署验证
+systemctl status buddy-server：服务运行中。
+curl http://127.0.0.1:3000/：通过。
+curl http://101.133.130.137/：通过。
+返回：
+{"status":"ok","message":"Buddy API Server"}
+Cloud Smoke V1 已通过项
+GET / 健康检查通过。
+POST /api/v1/auth/register：服务器本机 Linux curl 验证通过。
+POST /api/v1/auth/login：通过。
+GET /api/v1/auth/me：通过。
+POST /api/v1/pets：通过。
+GET /api/v1/pets/:petId/dashboard：通过。
+GET /api/v1/pets/:petId/logs?days=7：通过。
+GET /api/v1/homeworks/status：通过。
+POST /api/v1/pets/:petId/inventory/use：通过。
+使用基础粮食后再次 dashboard，foods=[]、inventory=[]，且 dailyBasicFood.granted=false，符合预期。
+已验证业务点
+新用户可注册、登录、获取 auth/me。
+新用户可创建宠物。
+首次 dashboard 会触发每日基础粮食：
+meal_box normal ×1
+foods 和 inventory 均可见。
+使用 meal_box normal 成功。
+使用后库存清空。
+当天再次 dashboard 不重复发基础粮食。
+timeContext 正常返回：
+serverNow
+timezone
+localDate
+dayPeriod
+lastSeenAt
+minutesSinceLastSeen
+returnGreeting
+homeworks/status 返回正常：
+dailyReward.limit=3
+used=0
+remaining=3
+四科 rewardAvailable=true
+当前已知问题 / 非阻塞项
+PowerShell 中文显示/请求存在编码问题
+创建宠物时中文名显示为 ????。
+logs / recent_events 中文在 PowerShell 输出中显示乱码。
+当前判断更可能是 PowerShell 输出或请求编码问题，不先判定为后端存储问题。
+后续需要用客户端或 UTF-8 bytes 请求单独验证中文入库和中文日志展示。
+PowerShell curl JSON 转义容易导致注册 500
+Windows curl.exe -d "{\"...\"}" 会导致后端 JSON parse error。
+推荐后续 smoke 使用 Invoke-RestMethod 或 JSON 文件方式。
+服务器 Linux curl 验证 register 正常。
+测试过程中 token / JWT_SECRET 曾暴露在对话里
+当前不影响 smoke 继续。
+阶段收口后建议统一轮换云端 JWT_SECRET，然后 systemctl restart buddy-server，使旧 token 失效。
+不要把 .env.production、数据库密码、JWT_SECRET 写入文档。
+root 用户查看 buddy clone 的 Git 仓库会出现 dubious ownership
+不影响服务。
+查看当前提交应使用：
+runuser -u buddy -- bash -lc 'cd /opt/buddy-server/current && git log --oneline -1'
+常用运维命令
+systemctl status buddy-server
+systemctl restart buddy-server
+journalctl -u buddy-server -n 100 --no-pager
+curl http://127.0.0.1:3000/
+curl http://101.133.130.137/
+readlink -f /opt/buddy-server/current
+runuser -u buddy -- bash -lc 'cd /opt/buddy-server/current && git log --oneline -1'
+下一步建议
+先轮换云端 JWT_SECRET，重启 buddy-server。
+用 UTF-8 方式做一次中文 smoke：
+中文宠物名
+中文 logs 文案
+客户端显示
+开始客户端切云端 API 的最小验证：
+API base 暂时指向 http://101.133.130.137
+真机或模拟器访问云端后端
+继续推进备案和域名：
+后续目标：https://api-staging.<域名>.cn
+暂不做 HTTPS，等域名解析和备案流程进一步完成后再配置。
 ## 2026-05-29 手动操作记录：cloud staging 准备
 
 操作者：用户手动执行，Codex 未参与。

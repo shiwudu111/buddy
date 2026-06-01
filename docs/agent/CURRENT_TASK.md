@@ -1,25 +1,32 @@
-# 当前任务：服务器云端迁移方案与环境清单
+# CURRENT TASK
 
-## 状态
+## 当前状态
 
-目标一的云端迁移方案和环境清单已完成整理；server CORS/env 前置改造已在 buddy-server 的 deploy/cloud-staging-v1 分支完成并推送。当前等待 root 文档 Review Gate 和提交。
+Cloud Staging V1 最小云端后端环境已跑通，处于阶段收口完成后的下一步准备阶段。
 
-## 目标
+已完成：
 
-- 明确 `buddy-server` 云端迁移路线。
-- 明确云端环境变量和机器环境。
-- 明确部署、migration、generate、restart、health check 和回滚要求。
-- 记录 CORS 环境化已完成的 server 分支和提交。
-## 允许文件
+* 阿里云轻量应用服务器初始化。
+* RDS PostgreSQL 16 创建并通过内网互通连接。
+* RDS 白名单限制为轻量服务器私网 IP。
+* buddy-server 部署到 `/opt/buddy-server/current`。
+* systemd 服务 `buddy-server.service` 已常驻运行。
+* Nginx 80 端口已反向代理到 `127.0.0.1:3000`。
+* 公网健康检查 `http://101.133.130.137/` 通过。
+* `deploy/cloud-staging-v1` 已修复 migration 空库重放问题，当前提交为 `b1c400a`。
+* Cloud Smoke V1 基础链路已通过：register、login、auth/me、create pet、dashboard、dailyBasicFood、timeContext、logs、homeworks/status、inventory/use。
 
-- `docs/agent/NEXT_VERSION_PLAN.md`
-- `docs/server/CLOUD-MIGRATION-PLAN.md`
-- `PLAN.md`
-- `docs/agent/CURRENT_TASK.md`
-- `docs/agent/HANDOFF.md`
+## 当前不做
 
-## 验证
+* 不修改 client/server 业务代码。
+* 不开放公网 3000。
+* 不开放公网 5432。
+* 不把数据库密码、JWT_SECRET、token 写入文档。
+* 不在备案和域名完成前强行配置正式 HTTPS 域名。
 
-- root/client/server 状态检查。
-- 文档内容自检。
-- 待 Review Gate。
+## 下一步
+
+1. 轮换云端 `JWT_SECRET` 并重启 `buddy-server`。
+2. 做 UTF-8 中文 smoke，确认中文宠物名和中文日志在客户端是否正常。
+3. 客户端最小切云端 API 测试，临时使用 `http://101.133.130.137`。
+4. 继续推进备案、域名解析、后续 HTTPS。
