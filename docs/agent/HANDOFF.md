@@ -50,8 +50,20 @@ Cloud Staging + Cocos 人工验收发现两个用户可见文案问题：
 - 未做 Prisma migration。
 - 未改 API 字段结构。
 - 未碰云服务器、RDS、Nginx、systemd。
-- 未部署云端。
-- 未提交、未推送。
+- 已部署云端并完成公网 smoke。
+- 已完成 Cocos 预览人工复验。
+- 已提交并推送 root 与 server。
+
+### 云端与 Cocos 收口结果
+
+- 云端当前 server 提交：`56b2d0f fix(events): use readable event copy`。
+- 云端健康检查通过：`http://127.0.0.1:3000/` 与 `http://101.133.130.137/` 均返回 OK。
+- 公网 smoke 通过：register、login、create pet、dashboard、use meal_box、events 均成功。
+- Cocos 预览人工复验通过：
+  - dashboard `recent_events` 显示“今日基础口粮已送达，记得照顾宠物哦。”
+  - `/events` feed detail 显示“使用了 1 份普通营养便当”
+  - 不再出现“小橘”
+  - 不再出现 `normal meal_box` 等技术字段
 
 ## 最近已完成阶段：Cloud Staging 客户端接入验证
 
