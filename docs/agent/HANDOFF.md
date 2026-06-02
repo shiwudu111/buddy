@@ -1,157 +1,114 @@
 # Buddy Agent Handoff
 
-## 2026-06-01 - Agent 账本编码修复
+## 2026-06-02 - Cloud Staging 客户端接入与登录收口
 
-### 本轮原因
+### 本轮完成
 
-进入下一阶段前执行 State Refresh，发现 `PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/HANDOFF.md` 读取结果出现明显乱码。由于这些文件是 Buddy Coordinator 的事实来源，若不先修复，会导致后续任务目标失真。
+- 完成 Cloud API base override 后续验证。
+- 完成云端事件文案一致性修复、部署和 Cocos 人工复验。
+- 完成登录失败跳转逻辑复验与客户端修复。
+- 完成 client 提交、push 和 WSL 同步。
 
-### 本轮处理
+### 关键事实
 
-- 重写 `PLAN.md` 为可读中文。
-- 重写 `docs/agent/CURRENT_TASK.md` 为可读中文。
-- 重写 `docs/agent/HANDOFF.md` 为可读中文。
-- 仅保留当前阶段需要的关键事实、边界和下一阶段建议。
-- 未修改 `buddy-client`。
-- 未修改 `buddy-server`。
-- 未触碰云服务器、RDS、Nginx、systemd。
-- 未提交、未推送。
+- Cloud API base: `http://101.133.130.137/api/v1`
+- Cocos 预览 override 设置方式：
 
-## 2026-06-01 - 云端事件文案一致性修复
+```js
+localStorage.setItem("BUDDY_API_BASE_URL", "http://101.133.130.137/api/v1")
+location.reload()
+```
 
-### 本轮原因
+- 恢复本地 API：
 
-Cloud Staging + Cocos 人工验收发现两个用户可见文案问题：
+```js
+localStorage.removeItem("BUDDY_API_BASE_URL")
+location.reload()
+```
 
-- 基础口粮事件写死“小橘”。
-- `/events` feed detail 暴露 `normal meal_box`、`premium logic_cookie` 等技术字段。
+- Cocos 网络面板看到 `http://101.133.130.137/api/v1/...` 即代表云端 override 生效。
+- 错误密码登录预期结果：
+  - 请求返回 401。
+  - 页面停留在登录页。
+  - 显示“用户名或密码错误”。
+  - 不进入 Main。
 
-### 本轮处理
+### 已提交内容
 
-- `buddy-server/src/routes/pet.ts`
-  - 新增食品质量中文映射。
-  - 复用作业奖励食品名称映射生成 feed 事件文案。
-  - 基础口粮文案改为“今日基础口粮已送达，记得照顾宠物哦。”
-- `buddy-server/tests/api.test.ts`
-  - 更新 diary logs 断言。
-  - 扩大 persistent events 查询 limit，避免被历史事件窗口影响。
-  - 增加 feed 事件不包含内部技术字段的断言。
+#### client
 
-### 验证结果
+- Branch: `develop`
+- Commit: `1dfd935 fix(login): clear stale resume state before auth`
+- 内容：
+  - 显式登录/注册提交前清理旧的可恢复会话标记。
+  - 避免登录失败后仍可能通过旧状态进入 Main。
+- 验证：
+  - `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
+  - Cocos 预览错误密码人工复验通过。
+- 状态：
+  - 已 push。
+  - 已同步到 WSL。
 
-- 已同步到本机 WSL 运行区并重启本地 server。
-- WSL 本地 server health check 通过。
-- `buddy-server`: `bun test` 通过，57 pass / 0 fail，253 个断言。
+#### server
 
-### 未做
+- Branch: `deploy/cloud-staging-v1`
+- Commit: `56b2d0f fix(events): use readable event copy`
+- 内容：
+  - 基础口粮文案改为通用宠物文案。
+  - `/events` feed detail 改为中文可读文案。
+  - 补充 API 测试。
+- 验证：
+  - `bun test` 通过。
+  - Cloud health check 通过。
+  - Cloud smoke 通过。
+  - Cocos 预览人工复验通过。
 
-- 未修改 `buddy-client`。
-- 未修改数据库 schema。
-- 未做 Prisma migration。
-- 未改 API 字段结构。
-- 未碰云服务器、RDS、Nginx、systemd。
-- 已部署云端并完成公网 smoke。
-- 已完成 Cocos 预览人工复验。
-- 已提交并推送 root 与 server。
+#### root
 
-### 云端与 Cocos 收口结果
+- Branch: `main`
+- Latest known commit: `8aeab55 docs(agent): close event copy validation`
+- 本轮正在更新账本，记录登录收口与下一步建议。
 
-- 云端当前 server 提交：`56b2d0f fix(events): use readable event copy`。
-- 云端健康检查通过：`http://127.0.0.1:3000/` 与 `http://101.133.130.137/` 均返回 OK。
-- 公网 smoke 通过：register、login、create pet、dashboard、use meal_box、events 均成功。
-- Cocos 预览人工复验通过：
-  - dashboard `recent_events` 显示“今日基础口粮已送达，记得照顾宠物哦。”
-  - `/events` feed detail 显示“使用了 1 份普通营养便当”
-  - 不再出现“小橘”
-  - 不再出现 `normal meal_box` 等技术字段
+### 本轮没有做
 
-## 最近已完成阶段：Cloud Staging 客户端接入验证
+- 没有改 server 业务逻辑。
+- 没有改 API 契约。
+- 没有改云服务器 systemd / Nginx / RDS / 安全组。
+- 没有开放公网 3000。
+- 没有开放公网 5432。
+- 没有写入或提交 `.env.production`、token、JWT_SECRET、数据库密码。
+- 没有做 HTTPS。
+- 没有做正式域名切换。
 
-### Root / Client 提交
+### 注意事项
 
-- root `main`: `78cd153 docs(agent): record cloud client override validation`
-- client `develop`: `6dc564d feat(api): add cloud staging base override`
-- server `deploy/cloud-staging-v1`: `b1c400a fix(prisma): make homework date migration replayable`
+1. client WSL 同步脚本默认 source 有旧路径风险。
+   - 错误风险路径：`/mnt/e/buddy-client`
+   - 当前正确路径：`/mnt/e/buddy/buddy-client`
+   - 后续同步 client 时建议显式传入：
 
-### 关键结论
+```bash
+SOURCE_DIR=/mnt/e/buddy/buddy-client sh tools/sync-windows-to-wsl.sh
+```
 
-- 客户端默认 API base 仍为 `http://localhost:3000/api/v1`。
-- 客户端支持临时 override：
-  - `globalThis.BUDDY_API_BASE_URL`
-  - `localStorage["BUDDY_API_BASE_URL"]`
-- Cocos 预览中设置 `BUDDY_API_BASE_URL=http://101.133.130.137/api/v1` 后，请求已成功打到云端。
-- Cloud CORS 已允许：
-  - `http://localhost:7456`
-  - `http://127.0.0.1:7456`
-- Cocos 预览本地模式通过。
-- Cocos 预览云端模式通过。
-- UTF-8 中文宠物名、dashboard、recent_events、events 均正常。
-- 背包使用每日基础口粮通过。
-- 作业图片上传、语文作业提交、奖励进入背包、作业状态和历史刷新通过。
+2. WSL 只读检查偶发 `WSL/Service/E_ACCESS_DENIED`。
+   - 不要直接判定同步失败。
+   - 先看同步脚本退出码和日志。
 
-### 云端事实
+3. Windows `curl.exe -d "{\"...\"}"` 可能造成 JSON 或中文编码误判。
+   - Cloud smoke 优先用 Node、Invoke-RestMethod 或 JSON 文件方式。
 
-- 公网入口暂为 `http://101.133.130.137/`。
-- API base 暂为 `http://101.133.130.137/api/v1`。
-- systemd 服务：`buddy-server.service`。
-- Nginx 80 端口反代到 `127.0.0.1:3000`。
-- 不开放公网 3000。
-- 不开放公网 5432。
-- RDS PostgreSQL 16 通过内网互通连接。
+4. 不要把 PowerShell 中文显示乱码直接判定为后端存储问题。
+   - 需要用 UTF-8 请求或 Cocos 客户端实测确认。
 
-### 安全边界
+### 下一轮建议
 
-- 不把 `.env.production`、数据库密码、JWT_SECRET、token 写入文档或提交。
-- 不重置 RDS。
-- 不轮换 JWT_SECRET，除非用户单独确认。
-- 不把 PowerShell 中文乱码直接判定为后端存储问题。
-- Windows `curl.exe -d "{\"...\"}"` 可能导致 JSON parse error；smoke 优先使用 Node、Invoke-RestMethod 或 JSON 文件。
+Task Name: 手机端 Cloud API 体验测试准备
 
-## 当前 Backlog
+建议先做：
 
-1. 基础口粮事件文案写死“小橘”。
-   - 当前宠物名为“星星”时，事件仍显示“记得照顾小橘哦”。
-   - 建议改为当前宠物名，或使用通用文案。
-
-2. `/events` feed detail 暴露技术字段。
-   - 例如：`使用了 1 份 normal meal_box`。
-   - 建议统一为中文可读文案，例如“使用了 1 份普通营养便当”。
-
-3. 登录 401 后可能仍进入 Main。
-   - 曾在 Cocos 控制台看到 `401 Unauthorized` 后出现 `LoadScene Main`。
-   - 需要后续单独复现；如果成立，修复登录失败跳转逻辑。
-
-4. 手机端测试包 API base 配置入口。
-   - 当前 override 适合 Cocos 预览和浏览器 localStorage。
-   - 手机端如果无法方便设置 storage，需要测试包配置入口。
-
-## 下一阶段建议任务
-
-Task Name: 云端事件文案一致性修复
-
-Goal:
-
-- 修复基础口粮事件文案写死“小橘”。
-- 统一 `/events` feed detail 的中文展示。
-- 保持 API 字段结构不变。
-- 不做数据库 migration。
-
-建议 Repo:
-
-- `buddy-server`
-- root 账本文档
-
-建议允许文件：
-
-- `buddy-server/src/routes/pet.ts` 或实际事件聚合/文案生成文件
-- `buddy-server/tests/api.test.ts`
-- `docs/contracts/diary.md` 如需补充文案约定
-- `PLAN.md`
-- `docs/agent/CURRENT_TASK.md`
-- `docs/agent/HANDOFF.md`
-
-建议验证：
-
-- `buddy-server`: `bun test`
-- 云端部署后 health check。
-- Cocos 预览 cloud override 下复验 dashboard、recent_events、events、背包使用。
+1. State Refresh。
+2. 检查 client 当前 Cloud API override 能否用于手机端测试包。
+3. 设计最小测试包配置方案。
+4. 准备手机端一日主链路验收清单。
+5. 再进入学生端一日体验 polish。
