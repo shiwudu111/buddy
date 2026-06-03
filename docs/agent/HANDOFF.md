@@ -1,90 +1,72 @@
 # Buddy Agent Handoff
 
-## 2026-06-03 - Cloud Staging 客户端接入阶段收口
+## 2026-06-03 - 手机端测试包 Cloud API 构建配置
 
-### 已完成内容
+### 本轮背景
 
-#### Cloud Staging 后端
+客户端已经支持 runtime API base override，但手机端测试包不方便手动设置 `BUDDY_API_BASE_URL`。本轮选择“测试包构建期写入 cloud base”方案，避免新增隐藏 UI，也不改变本地开发默认地址。
 
-- 公网 API base: `http://101.133.130.137/api/v1`
-- server commit: `56b2d0f fix(events): use readable event copy`
-- 已完成：
-  - UTF-8 中文 smoke。
-  - dashboard recent_events 中文验证。
-  - `/events?limit=20` 中文验证。
-  - 基础口粮文案去除“小橘”写死。
-  - feed detail 去除 `normal meal_box` 等技术字段。
+### 本轮实现
 
-#### Cloud CORS
+#### client
 
-- 已允许 Cocos 预览来源：
-  - `http://localhost:7456`
-  - `http://127.0.0.1:7456`
+- 新增 `tools/set-api-base.mjs`
+  - `npm run api:cloud` 写入 Cloud API base。
+  - `npm run api:local` 清空构建期 API base。
+- 新增 `assets/scripts/core/build-config.generated.ts`
+  - 默认内容为空字符串。
+  - 测试包构建前可写入 Cloud API base。
+- 更新 `assets/scripts/core/config.ts`
+  - 在 runtime override 后读取 `BUILD_API_BASE_URL`。
+  - 默认仍回落到 `API_CONFIG.baseUrl`。
+- 更新 `package.json`
+  - 新增 `api:cloud`
+  - 新增 `api:local`
 
-#### Client API base override
+### 使用方式
 
-- 默认仍为：
-  - `http://localhost:3000/api/v1`
-- 支持 override：
-  - `globalThis.BUDDY_API_BASE_URL`
-  - 浏览器 `localStorage["BUDDY_API_BASE_URL"]`
-  - Cocos `sys.localStorage["BUDDY_API_BASE_URL"]`
-- client commits:
-  - `6dc564d feat(api): add cloud staging base override`
-  - `8a1c391 feat(api): read override from cocos storage`
+构建云端测试包前：
 
-#### 登录失败跳转修复
+```powershell
+cd E:\buddy\buddy-client
+npm run api:cloud
+```
 
-- client commit: `1dfd935 fix(login): clear stale resume state before auth`
-- 人工验收：
-  - 错误密码返回 401。
-  - 页面停留登录页。
-  - 显示“用户名或密码错误”。
-  - 不进入 Main。
+构建完成或回到本地开发前：
 
-#### UTF-8 文档防线
+```powershell
+cd E:\buddy\buddy-client
+npm run api:local
+```
 
-- root commit: `0fb8220 docs(agent): add utf8 doc guardrails`
-- 新增工具：
-  - `tools/read-utf8-doc.ps1`
-  - `tools/check-utf8-docs.mjs`
-- 规则：
-  - 不再用裸 `Get-Content` 判断中文文档是否乱码。
-  - PowerShell 显示乱码但 Node UTF-8 检查正常时，不重写文档。
+### 验证
 
-### 本轮正在收口
+- `npm run api:cloud` 通过。
+- `npm run api:local` 通过。
+- `bunx tsc --noEmit --ignoreDeprecations 6.0` 通过。
 
-- 更新 root 账本到当前真实状态。
-- 修正 client WSL 同步脚本默认 `SOURCE_DIR` 为 `/mnt/e/buddy/buddy-client`。
+### 注意事项
 
-### 本轮没有做
+- 提交前应保持 `build-config.generated.ts` 为空值：
 
-- 没有改 client 业务逻辑。
-- 没有改 server。
-- 没有改云服务器配置。
-- 没有改 RDS。
-- 没有做 HTTPS。
-- 没有做正式域名切换。
-- 没有处理 WSL mirrored 网络。
+```ts
+export const BUILD_API_BASE_URL = "";
+```
 
-### 当前环境风险
+- 不要把 Cloud IP 改成 `API_CONFIG.baseUrl` 默认值。
+- 不要提交 `.env.production`、token、JWT_SECRET、数据库密码。
+- 本地 Windows 访问 `localhost:3000` 的问题暂时属于 WSL mirrored 网络/代理环境问题，不作为本轮阻塞。
 
-1. Windows 本地访问 `localhost:3000` 失败。
-   - WSL 内部 server 正常。
-   - 根因是 WSL mirrored 网络回退到 None，以及代理变量把 localhost 转到 `127.0.0.1:7897`。
-   - 用户决定下次重启电脑后再处理。
-2. 手机端测试包还没有正式 Cloud API 配置入口。
-   - 下一阶段需要设计方案。
+### 下一步
 
-### 下一轮建议任务
+进入手机端一日主链路人工验收准备：
 
-Task Name: 手机端测试包配置方案
-
-建议先输出方案，不直接改代码：
-
-1. 比较三种方式：
-   - 构建期注入 Cloud API base。
-   - 隐藏调试入口设置 API base。
-   - 平台 storage 写入 `BUDDY_API_BASE_URL`。
-2. 选一个最小可验证方案。
-3. 准备手机端一日主链路验收清单。
+1. 注册/登录。
+2. 创建或进入宠物主页。
+3. dashboard 刷新。
+4. 提交作业获得奖励。
+5. 背包显示奖励。
+6. 使用背包物品。
+7. 日记显示事件。
+8. 聊天发送消息。
+9. 家长侧绑定和查看。
