@@ -308,3 +308,22 @@ Ownership 判断：
 - Client TypeScript：在 `buddy-client/` 下运行 `bunx tsc --noEmit --ignoreDeprecations 6.0`。
 - Server tests：在 `buddy-server/` 下运行 `bun test`。
 - 文档-only 改动：检查文件清单、`git diff --stat`、三仓库 `git status -sb`。
+
+## 中文文档编码防线
+
+- 中文 `.md` 文档统一按 UTF-8 读取和写入。
+- 不要用裸 `Get-Content docs\...\*.md` 判断中文文档是否乱码；Windows PowerShell 默认输出编码可能造成显示层乱码。
+- 读取中文文档优先使用：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\read-utf8-doc.ps1 docs\agent\CURRENT_TASK.md -First 40
+```
+
+- 检查文档是否疑似真实乱码时使用：
+
+```powershell
+node tools\check-utf8-docs.mjs docs\agent\CURRENT_TASK.md docs\agent\HANDOFF.md
+```
+
+- 只有当 `check-utf8-docs.mjs` 报告 replacement 或 mojibake 大于 0，才把它当作真实文件编码风险。
+- 如果 PowerShell 显示乱码但 `node` UTF-8 检查正常，不要重写文档；那是终端输出编码问题。
