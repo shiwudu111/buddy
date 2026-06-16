@@ -40,6 +40,42 @@ Buddy Codex 不是“万能 agent”，而是带闸门的推进系统：
 5. 子仓库本地文档
 6. 归档文档
 
+## Truth Source Guard
+
+- 根目录 `PLAN.md` 是唯一当前任务执行源。
+- 根目录 `docs/agent/` 是唯一 Agent 状态账本。
+- 根目录 `docs/contracts/` 是唯一跨端契约源。
+- 子仓 `AGENTS.md` 只能补充本仓执行边界，不能覆盖根目录 `AGENTS.md`。
+- 子仓 `PLAN.md` 不得声明当前任务源；如存在，只能作为 backlog、archive 或局部草案，并必须在文件前 10 行说明它不是当前任务源。
+- State Refresh 时如发现子仓 `AGENTS.md` / `PLAN.md` 声称拥有当前任务源，必须先暂停业务代码修改，进入文档收编任务。
+
+## Lite Flow 与触发式读取
+
+为节省 token，Buddy Coordinator 默认使用 Lite Flow，但不得降低任务边界、验证和提交安全性。
+
+默认 Lite Task Packet：
+
+```text
+Task:
+Scope:
+Allowed Files:
+Validation:
+Stop Conditions:
+```
+
+出现以下任一情况，必须升级 Full Flow：跨仓任务、契约变化、提交/推送/WSL 同步、dirty diff 未解释、任务源冲突、测试失败、用户中断恢复、Allowed Files 不明确、用户明确要求完整流程。
+
+Agent 文件读取采用触发式读取，不允许默认全读。
+
+- 默认只读 root `AGENTS.md`、`PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/STATE.md`、`docs/agent/DECISIONS.md`。
+- `docs/agent/HANDOFF.md` 仅在恢复任务、上下文冲突、上一轮未收口、提交前确认时读取。读取时默认只读文件顶部 `Latest Handoff Summary`；如果摘要不足，再读摘要后第一个日期交接段。不得默认读取全文。
+- `docs/agent/CHECKLISTS.md` 只在 Review/Test、流程复盘、流程规则修改时读取。
+- `docs/agent/SUBAGENTS.md` 只在用户明确要求或 Task Packet 授权子 agent 时读取。
+- `docs/agent/MOBILE_BUILD_GUIDE.md` 只在 APK、手机安装、Cocos Android、Gradle、Android 原生构建、adb logcat 或 crash 日志相关任务读取。
+- `docs/agent/MOBILE_SMOKE_CHECKLIST.md` 只在手机冒烟、人工验收、Release/Sync 后手机验证、真机行为回归确认时读取。
+- `docs/agent/NEXT_VERSION_PLAN.md` 只在版本规划、roadmap、milestone、release plan 相关任务读取。
+- 如果默认读取文件之间出现任务冲突、事实冲突或权限冲突，停止写代码，升级 Full State Refresh。
+
 ## Buddy Coordinator
 
 Buddy Coordinator 是唯一主控。职责是拆任务、控范围、决定阶段切换和汇总风险。Coordinator 不应长时间静默大改代码。

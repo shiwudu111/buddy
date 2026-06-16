@@ -1,46 +1,48 @@
 # CURRENT TASK
 
-## 2026-06-06 当前任务：收口热更日志任务，准备点击登录闪崩定位
+## 2026-06-16 当前任务：文档事实源收编与 Lite Flow 防分裂规则
 
-### 已完成任务
+### 任务目标
 
-1. OSS HTTPS staging 热更链路已跑通。
-2. 登录页前置可视热更检查页已接入。
-3. 手机端开发日志面板已接入，支持查看、触摸滚动、清热更、查热更、复制完整日志。
-4. Android 剪贴板桥已加入 `AppActivity`，复制日志可粘贴到微信。
-5. 热更包生成和 OSS 上传脚本已加入，已验证 `0.0.11`。
-6. 下载日志已节流，避免复制日志被大量 downloading 事件淹没。
+修复 root 与 `buddy-client` 之间的当前任务源分裂，明确 Buddy Coordinator 的唯一主控关系，并把省 token 的读取策略落到流程文档中。
 
 ### 当前事实
 
-- staging base 暂用阿里云 OSS HTTPS 直链：
-  - `https://buddy-hotupdate-zhzhwd1290.oss-cn-shanghai.aliyuncs.com/buddy-hot-update/staging/`
-- `HotUpdateService` 在原生环境下使用 Cocos AssetsManager 检查并下载热更。
-- 登录页启动时先显示热更检查页，再进入登录恢复流程。
-- `DevActionLogger` 保留最近动作日志，并支持日志面板 header 和完整复制。
-- `LoginController` 将热更版本摘要注册到日志面板顶部。
-- `generate-hot-update-manifest.mjs` 从 `build/android/data` 生成热更资源和 manifest。
-- `set-hot-update-url.mjs` 写入 APK 内置的 project manifest URL。
-- `upload-hot-update-oss.mjs` 上传热更目录到 OSS staging/prod/dev 路径。
+- root `PLAN.md` 是唯一当前任务执行源。
+- root `docs/agent/` 是唯一 Agent 状态账本。
+- root `docs/contracts/` 是唯一跨端契约源。
+- `buddy-client/AGENTS.md` 需要降级为本仓局部执行边界，不得覆盖 root Coordinator。
+- `buddy-client/PLAN.md` 需要降级为客户端 backlog / archive，不得继续使用任务标题声明主控入口。
+- 本轮不修改业务代码、不处理 Cocos settings 噪音、不清理 `.tmp/`、不提交、不推送。
 
-### 验证状态
+### Allowed Files
 
-- `bunx tsc --noEmit --ignoreDeprecations 6.0` 已通过。
-- 手机端热更状态已复制确认：`local=0.0.11 remote=0.0.11 failed=0`。
-- 日志复制已确认可输出完整 manifest URL。
+- `AGENTS.md`
+- `PLAN.md`
+- `docs/agent/CURRENT_TASK.md`
+- `docs/agent/HANDOFF.md`
+- `buddy-client/AGENTS.md`
+- `buddy-client/PLAN.md`
 
-### 当前收口
+### Validation
 
-- 提交并推送 `buddy-client` 本轮热更 / 日志代码。
-- 提交并推送 root agent 文档更新。
-- 不提交 `buddy-client/.tmp`、`buddy-client/hello.txt`、父级 `.tools/`。
+```powershell
+node tools/check-utf8-docs.mjs AGENTS.md PLAN.md docs/agent/CURRENT_TASK.md docs/agent/HANDOFF.md buddy-client/AGENTS.md buddy-client/PLAN.md
+git diff --stat
+git status -sb
+```
 
-### 下一阶段
+还需要分别检查：
 
-下一阶段唯一任务：定位并修复手机端“点击登录”闪崩。
+- `E:\buddy`
+- `E:\buddy\buddy-client`
+- `E:\buddy\buddy-server`
 
-建议入口：
+### 下一步
 
-1. 用当前日志面板复现点击登录前后的日志。
-2. 优先收集 `login.*`、`api.request.*`、`runtime.error`、`runtime.unhandledRejection`。
-3. 若应用直接进程退出，补 adb logcat 或 Android crash 日志。
+本轮文档收编完成后，先重新 State Refresh，再由 root `PLAN.md` 写入新的唯一产品任务。
+
+已知历史事实：
+
+- 手机端“点击登录”闪崩已完成定位和修复。
+- 根因与美术调参页有关；渲染时排除美术调参页后，手机端不再闪崩。

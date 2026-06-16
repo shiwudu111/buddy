@@ -1,5 +1,121 @@
 # Buddy Agent Handoff
 
+## Latest Handoff Summary
+
+- 当前任务：文档事实源收编与 Lite Flow 防分裂规则。
+- 唯一当前任务源：root `PLAN.md`。
+- 唯一 Agent 状态账本：root `docs/agent/`。
+- 子仓 `PLAN.md` 只能作为 backlog / archive / 局部草案，不得声明当前任务源。
+- 本轮只改流程文档，不改业务代码、不提交、不推送。
+- 历史事实：手机端“点击登录”闪崩已完成；根因与美术调参页有关，渲染时排除美术调参页后不再闪崩。
+
+## 2026-06-16 - 文档事实源收编与 Lite Flow 防分裂规则
+
+### 本轮背景
+
+root 与 `buddy-client` 同时存在 `AGENTS.md`、`PLAN.md`、`docs/`，且 `buddy-client/AGENTS.md` 旧版规则把本仓 `PLAN.md` 当作执行源，造成双主控风险。本轮先修流程阻塞，不进入业务代码。
+
+### 本轮结果
+
+- root `AGENTS.md` 新增 Truth Source Guard、Lite Flow 与触发式读取规则。
+- root `PLAN.md` 收束为当前文档收编任务，并记录“点击登录闪崩”已是历史完成项。
+- `docs/agent/CURRENT_TASK.md` 对齐本轮流程修复任务。
+- `docs/agent/HANDOFF.md` 增加顶部 `Latest Handoff Summary`，后续默认不需要读全文。
+- `buddy-client/AGENTS.md` 降级为客户端本仓执行边界。
+- `buddy-client/PLAN.md` 降级为 `Client Local Backlog`，不再作为当前任务源。
+
+### 验证
+
+- UTF-8 检查通过：`AGENTS.md`、`PLAN.md`、`docs/agent/CURRENT_TASK.md`、`docs/agent/HANDOFF.md`、`buddy-client/AGENTS.md`、`buddy-client/PLAN.md`。
+- Truth Guard 关键字扫描未发现子仓继续声明当前任务源。
+- 本轮未修改业务代码。
+
+### 遗留状态
+
+- root 仍有既存未跟踪项：`.tools/`、`docs/agent/MOBILE_BUILD_GUIDE.md`、`docs/agent/MOBILE_SMOKE_CHECKLIST.md`。
+- client 仍有既存 Cocos settings 噪音：`settings/v2/packages/cocos-service.json`、`settings/v2/packages/information.json`。
+- client 仍有既存 `.tmp/`。
+- 本轮未提交、未推送、未 WSL 同步。
+
+### 下一步
+
+下一阶段产品任务尚未重新指定。开始前先按新的 Truth Guard 做 State Refresh，并避免把既存 settings 噪音或 `.tmp/` 混入提交。
+
+## 2026-06-11 - Main home 与 pet life diagnostics 收口
+
+### 提交线索
+
+- client `5022462 feat(main): close pet life diagnostics pass`
+- client `92d6ad2 fix(main): improve phone landscape home layout`
+
+### 已知结果
+
+- Main 首页横屏布局做过手机端适配，重点改动在 `MainController.ts` 与 `MainStageRenderer.ts`。
+- pet life diagnostics 收口，涉及 `config.ts`、`LoginController.ts`、`MainController.ts`、`MainLifeFeedback.ts`、`MainPetAnimator.ts`。
+- 新增 `docs/main-art-replacement-inventory.md`，记录美术资源替换盘点。
+- `buddy-client/PLAN.md` 当时仍保存 Main home closeout 任务；2026-06-16 已降级为本仓 backlog，不再作为当前任务源。
+
+### 风险
+
+- 该阶段改动量较大，特别是 `MainController.ts`。
+- 后续若继续 Main 首页任务，应先读 root `PLAN.md`，再按需查看 client backlog 和相关提交。
+
+## 2026-06-10 - 美术调参页 Android crash 修复与原生日志增强
+
+### 提交线索
+
+- client `e36fc5c fix(main): prevent Android crash from art debug entry`
+- client `cc00eeb fix(main): improve native log and pet interactions`
+
+### 已知结果
+
+- 手机端“点击登录”闪崩已完成定位和修复。
+- 根因与美术调参页有关；渲染时排除美术调参页后，手机端不再闪崩。
+- 同日还增强了原生日志、运行时 UI 与宠物交互链路。
+
+### 风险
+
+- 该修复涉及 `LoginController.ts`、`MainController.ts`、`RuntimeUI.ts`、`ApiClient.ts`。
+- 若后续再出现手机端闪崩，应先确认是否重新引入美术调参入口或相关渲染路径。
+
+## 2026-06-08 至 2026-06-10 - 热更原生恢复链路加固
+
+### 提交线索
+
+- client `c1580ab fix(hot-update): restore native search paths`
+- client `3508b74 fix(hot-update): harden native restore state`
+
+### 已知结果
+
+- 恢复 Cocos 原生 search paths，新增 `native/engine/common/Classes/Game.cpp`。
+- 加固 `HotUpdateService` 原生恢复状态，避免热更恢复链路不稳定。
+- 相关改动还触及 `ApiClient.ts`、`PetService.ts`、`LoginController.ts`、`MainController.ts`。
+
+### 风险
+
+- 这类改动涉及 APK 原生壳，不能只靠 TS 热更验证。
+- 后续热更问题需要区分 APK 原生能力、search paths、manifest 与 TS 资源更新。
+
+## 2026-06-06 - 热更日志与 OSS staging 工具收口
+
+### 提交线索
+
+- client `0d33470 feat(hot-update): add staging updater logs`
+- root `b0465ad docs(agent): close hot update task`
+
+### 已知结果
+
+- 新增 `DevActionLogger` 与 `HotUpdateService`。
+- 登录页与 Main 页接入开发日志入口。
+- 新增 Android 剪贴板桥 `AppActivity.java`，支持复制日志。
+- 新增热更 manifest、URL 写入、OSS 上传脚本。
+- root agent 文档完成热更任务收口。
+
+### 风险
+
+- `AppActivity.java` 与后续 `Game.cpp` 属于 APK 原生壳，首次接入或修改后必须完整构建安装 APK。
+- `buddy-client/.tmp` 与测试产物仍不得提交。
+
 ## 2026-06-05 - OSS HTTPS 真实网络热更测试方案
 
 ### 本轮背景
