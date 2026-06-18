@@ -1,33 +1,41 @@
 # CURRENT TASK
 
-## 2026-06-16 当前任务：文档事实源收编与 Lite Flow 防分裂规则
+## 2026-06-17 当前任务：手机端作业提交页相册选择修复
 
 ### 任务目标
 
-修复 root 与 `buddy-client` 之间的当前任务源分裂，明确 Buddy Coordinator 的唯一主控关系，并把省 token 的读取策略落到流程文档中。
+修复手机端提交作业页面点击“选择图片”没有效果的问题，让用户可以打开手机相册选择作业照片，并继续通过后端上传接口保存图片 URL。
 
 ### 当前事实
 
-- root `PLAN.md` 是唯一当前任务执行源。
-- root `docs/agent/` 是唯一 Agent 状态账本。
-- root `docs/contracts/` 是唯一跨端契约源。
-- `buddy-client/AGENTS.md` 需要降级为本仓局部执行边界，不得覆盖 root Coordinator。
-- `buddy-client/PLAN.md` 需要降级为客户端 backlog / archive，不得继续使用任务标题声明主控入口。
-- 本轮不修改业务代码、不处理 Cocos settings 噪音、不清理 `.tmp/`、不提交、不推送。
+- 本轮只修改 `buddy-client` 与 root 任务文档。
+- 原问题原因：作业图片选择只走 Web DOM `<input type=file>`，原生手机包没有 DOM。
+- 已新增 `HomeworkImagePickerService`，封装 Web / Android 原生图片选择。
+- 已新增 `NativeCapabilityService`，统一封装 native bridge 与权限查询 / 请求入口。
+- `MainController` 只保留薄调用，不承载 Android 桥接和 base64 解码细节。
+- Android `AppActivity` 已新增系统相册选择桥，优先 `ACTION_PICK`，再 fallback 到 `ACTION_OPEN_DOCUMENT` / `ACTION_GET_CONTENT`。
+- 上传仍走 `/homeworks/uploads`，为后续服务端 / AI 判断图片内容保留后端 URL 链路。
+- 已为后续语音输入预留麦克风权限状态、请求和请求结果查询；本轮不实现录音。
 
 ### Allowed Files
 
-- `AGENTS.md`
+- `buddy-client/assets/scripts/services/HomeworkImagePickerService.ts`
+- `buddy-client/assets/scripts/services/HomeworkImagePickerService.ts.meta`
+- `buddy-client/assets/scripts/services/NativeCapabilityService.ts`
+- `buddy-client/assets/scripts/services/NativeCapabilityService.ts.meta`
+- `buddy-client/assets/scripts/network/ApiClient.ts`
+- `buddy-client/assets/scripts/ui/homework/HomeworkCenterCoordinator.ts`
+- `buddy-client/assets/scripts/ui/main/MainController.ts`
+- `buddy-client/native/engine/android/app/src/com/cocos/game/AppActivity.java`
 - `PLAN.md`
 - `docs/agent/CURRENT_TASK.md`
 - `docs/agent/HANDOFF.md`
-- `buddy-client/AGENTS.md`
-- `buddy-client/PLAN.md`
 
 ### Validation
 
 ```powershell
-node tools/check-utf8-docs.mjs AGENTS.md PLAN.md docs/agent/CURRENT_TASK.md docs/agent/HANDOFF.md buddy-client/AGENTS.md buddy-client/PLAN.md
+cd E:\buddy\buddy-client
+bunx tsc --noEmit --ignoreDeprecations 6.0
 git diff --stat
 git status -sb
 ```
@@ -38,11 +46,7 @@ git status -sb
 - `E:\buddy\buddy-client`
 - `E:\buddy\buddy-server`
 
-### 下一步
+### 验证状态
 
-本轮文档收编完成后，先重新 State Refresh，再由 root `PLAN.md` 写入新的唯一产品任务。
-
-已知历史事实：
-
-- 手机端“点击登录”闪崩已完成定位和修复。
-- 根因与美术调参页有关；渲染时排除美术调参页后，手机端不再闪崩。
+- TypeScript 检查已通过。
+- Android 完整 APK 构建尚未执行；因为改了 `AppActivity.java`，后续必须重新构建安装 APK 才能真机验证相册选择。

@@ -2,12 +2,48 @@
 
 ## Latest Handoff Summary
 
-- 当前任务：文档事实源收编与 Lite Flow 防分裂规则。
+- 当前任务：手机端作业提交页相册选择修复。
 - 唯一当前任务源：root `PLAN.md`。
 - 唯一 Agent 状态账本：root `docs/agent/`。
 - 子仓 `PLAN.md` 只能作为 backlog / archive / 局部草案，不得声明当前任务源。
-- 本轮只改流程文档，不改业务代码、不提交、不推送。
+- 本轮只改 `buddy-client` 图片选择 / 上传输入链路与 root 任务文档，不改后端。
+- 当前实现：`NativeCapabilityService` 统一 native bridge / 权限入口；`HomeworkImagePickerService` 封装 Web input 与 Android 系统相册选择；`MainController` 只保留薄调用。
+- 验证：TypeScript 已通过；Android APK 尚未完整构建，需真机验证相册选择。
 - 历史事实：手机端“点击登录”闪崩已完成；根因与美术调参页有关，渲染时排除美术调参页后不再闪崩。
+
+## 2026-06-17 - 手机端作业提交页相册选择修复
+
+### 本轮背景
+
+手机端作业提交页点击“选择图片”没有效果。定位后发现现有选择图片逻辑只使用 Web DOM `<input type=file>`，原生手机包没有 DOM，因此无法打开手机相册。
+
+### 本轮实现
+
+- 新增 `assets/scripts/services/HomeworkImagePickerService.ts`
+  - Web 环境继续使用 `<input type=file>`。
+  - Android 原生环境通过反射调用 `AppActivity`。
+  - Android 优先打开系统相册 `ACTION_PICK`，失败时 fallback 到 `ACTION_OPEN_DOCUMENT` / `ACTION_GET_CONTENT`。
+  - Android 返回文件名、mime type 和图片内容，TS 构造 `File` / `Blob` 后复用现有上传流程。
+- 新增 `assets/scripts/services/NativeCapabilityService.ts`
+  - 统一封装 native bridge 调用。
+  - 预留 `microphone` / `photoLibrary` 权限查询、请求和请求结果查询。
+  - 后续语音输入应先接入该服务，不要直接在页面控制器里调用 Android 反射。
+- `MainController` 改为只调用 `homeworkImagePickerService.pickImage()`，不承载 Android 桥接和 base64 解码细节。
+- `HomeworkCenterCoordinator` 支持上传 `File | Blob`。
+- `ApiClient.uploadHomeworkImage()` 为 FormData 文件字段补稳定文件名。
+- `AppActivity.java` 新增作业图片选择桥和 Activity result 处理。
+
+### 验证
+
+- `bunx tsc --noEmit --ignoreDeprecations 6.0` 已通过。
+- UTF-8 检查已覆盖新增/修改 TS 文件。
+- Android 完整 APK 构建尚未执行。
+
+### 下一步
+
+- 重新构建并安装 Android APK。
+- 真机验证：点击作业页“选择图片”应打开系统相册；选图后应上传成功并能提交作业。
+- 如后续接入 AI 判断图片内容，应在后端基于上传后的图片 URL / 文件存储链路扩展，不在客户端离线伪造判断。
 
 ## 2026-06-16 - 文档事实源收编与 Lite Flow 防分裂规则
 

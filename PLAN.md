@@ -2,59 +2,67 @@
 
 ## 当前任务
 
-Buddy 文档事实源收编与 Lite Flow 防分裂规则。
+手机端作业提交页相册选择修复。
 
 ## Goal
 
-修复 root 与 `buddy-client` 之间的当前任务源分裂，明确后续唯一主控关系，并把省 token 的读取策略落到流程文档中。
+修复手机端提交作业页面点击“选择图片”没有效果的问题，让用户可以像普通 App 一样打开手机相册，选择作业照片并上传到后端。
 
 ## 当前事实
 
-- root `PLAN.md` 是唯一当前任务执行源。
-- root `docs/agent/` 是唯一 Agent 状态账本。
-- root `docs/contracts/` 是唯一跨端契约源。
-- `buddy-client/AGENTS.md` 的旧版主控表述已改为本仓局部规则。
-- `buddy-client/PLAN.md` 的旧版任务清单需降级为 backlog / archive，不再作为主控入口。
-- root 当前存在未跟踪 `.tools/`、`docs/agent/MOBILE_BUILD_GUIDE.md`、`docs/agent/MOBILE_SMOKE_CHECKLIST.md`，本轮不处理。
-- client 当前存在 Cocos settings 噪音与 `.tmp/`，本轮不处理。
-- server 当前无本轮改动；后续若涉及 server，需要先确认分支与任务范围。
+- 三仓 State Refresh 时均为干净状态。
+- 本轮只修改 `buddy-client`，不修改 `buddy-server`。
+- 原问题原因：作业图片选择只走 Web DOM `<input type=file>`，原生手机包没有 DOM，因此点击后无有效相册入口。
+- 新方案：客户端通过独立 `HomeworkImagePickerService` 选择图片。
+- 原生能力通过 `NativeCapabilityService` 统一调用，避免页面控制器直接散落 native bridge。
+- Web 环境继续使用 `<input type=file>`。
+- Android 原生环境通过 `AppActivity` 打开系统相册 `ACTION_PICK`，失败时 fallback 到 `ACTION_OPEN_DOCUMENT` / `ACTION_GET_CONTENT`。
+- 图片仍上传到后端 `/homeworks/uploads`，提交作业继续使用后端返回的图片 URL，后续可交给服务端 / AI 判断图片内容。
+- 已为后续语音输入预留麦克风权限查询 / 请求 / 请求结果查询入口，但本轮不实现录音。
 
 ## Lite Task Packet
 
 ```text
-Task: Buddy 文档事实源收编与 Lite Flow 防分裂规则
-Scope: root 流程文档与 buddy-client 本仓规则/计划降级
+Task: 手机端作业提交页相册选择修复
+Scope: buddy-client 作业图片选择、上传输入、Android 相册桥
 Allowed Files:
-  AGENTS.md
+  buddy-client/assets/scripts/services/HomeworkImagePickerService.ts
+  buddy-client/assets/scripts/services/HomeworkImagePickerService.ts.meta
+  buddy-client/assets/scripts/services/NativeCapabilityService.ts
+  buddy-client/assets/scripts/services/NativeCapabilityService.ts.meta
+  buddy-client/assets/scripts/network/ApiClient.ts
+  buddy-client/assets/scripts/ui/homework/HomeworkCenterCoordinator.ts
+  buddy-client/assets/scripts/ui/main/MainController.ts
+  buddy-client/native/engine/android/app/src/com/cocos/game/AppActivity.java
   PLAN.md
   docs/agent/CURRENT_TASK.md
   docs/agent/HANDOFF.md
-  buddy-client/AGENTS.md
-  buddy-client/PLAN.md
 Validation:
-  node tools/check-utf8-docs.mjs AGENTS.md PLAN.md docs/agent/CURRENT_TASK.md docs/agent/HANDOFF.md buddy-client/AGENTS.md buddy-client/PLAN.md
-  git diff --stat
-  root / client / server git status -sb
+  buddy-client: bunx tsc --noEmit --ignoreDeprecations 6.0
+  buddy-client: git diff --stat
+  root/client/server: git status -sb
 Stop Conditions:
-  发现业务代码需要修改
-  发现需要删除或移动用户文件
-  发现当前任务源仍不唯一
-  UTF-8 检查失败
+  需要修改后端上传契约
+  需要新增 Android 权限或 Gradle 配置
+  TypeScript 检查失败
+  发现 MainController 继续承载大段图片选择逻辑
 ```
 
 ## Out of Scope
 
-- 不修改业务代码。
-- 不处理 `buddy-client` Cocos settings 噪音。
-- 不清理或提交 `.tmp/`。
-- 不修改 `buddy-server`。
-- 不提交、不推送、不 WSL 同步。
+- 不修改后端。
+- 不改变作业奖励、库存、宠物状态规则。
+- 不伪造作业图片或库存。
+- 不提交 `.tmp/`。
+- 不处理无关 UI 重构。
+
+## 验证状态
+
+- `bunx tsc --noEmit --ignoreDeprecations 6.0` 已通过。
+- Android 完整 APK 构建尚未执行；本轮涉及 `AppActivity.java`，后续必须重新构建并安装 APK 做真机验证。
 
 ## 下一步
 
-完成本轮文档收编后，先重新 State Refresh，再由 root `PLAN.md` 写入新的唯一产品任务。
-
-已知历史事实：
-
-- 手机端“点击登录”闪崩已完成定位和修复。
-- 根因与美术调参页有关；渲染时排除美术调参页后，手机端不再闪崩。
+1. 复查 diff 范围。
+2. 如需收口，提交 `buddy-client` 与 root 文档改动。
+3. 重新构建安装手机 APK，验证点击“选择图片”能打开相册、选图后能上传并提交作业。
