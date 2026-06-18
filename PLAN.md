@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-当前无进行中的业务任务。上一任务“手机端作业提交页相册选择修复”已完成。
+手机端作业图片上传结构稳固化与相册权限授权。
 
 ## Goal
 
@@ -20,6 +20,8 @@
 - 图片仍上传到后端 `/homeworks/uploads`，提交作业继续使用后端返回的图片 URL，后续可交给服务端 / AI 判断图片内容。
 - 已为后续语音输入预留麦克风权限查询 / 请求 / 请求结果查询入口，但本轮不实现录音。
 - 0.0.62 真机日志已验证：相册可打开，图片上传走 multipart fallback 成功，`POST /homeworks/submit` 成功，奖励与库存同步成功。
+- 二次加固已提交到 `buddy-client/develop`：图片选择结果改为结构化 `PickedHomeworkImage`，上传策略移入 `HomeworkImageUploadService`，`ApiClient` 不再承载 Android 图片上传 fallback。
+- Android 相册权限已改为真实 runtime permission：首次使用相册前通过 `NativeCapabilityService` 请求 `photoLibrary`，原生侧按系统版本请求 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。
 
 ## Lite Task Packet
 
@@ -71,6 +73,6 @@ Stop Conditions:
 
 ## 下一步
 
-1. 等待下一轮任务。
-2. 若继续扩展作业图片 AI 判断，优先在后端基于上传后的图片 URL / 文件存储链路扩展，不在客户端离线伪造判断。
-3. 若继续做语音输入，复用 `NativeCapabilityService` 权限入口，不要把 Android 反射逻辑散落到页面控制器。
+1. 重新构建 Android APK，确保新的 `AndroidManifest.xml` 权限声明和 `AppActivity.java` 权限桥进入安装包。
+2. 基于新构建的 `build/android/data` 生成并上传 staging 热更 `0.0.63`。
+3. 真机验证：首次点选择图片应出现系统相册权限弹窗；允许后应打开相册、上传图片并提交作业成功。

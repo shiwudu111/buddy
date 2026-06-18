@@ -2,14 +2,15 @@
 
 ## Latest Handoff Summary
 
-- 当前任务：无进行中的业务任务。
+- 当前任务：作业图片上传结构稳固化与相册权限授权。
 - 唯一当前任务源：root `PLAN.md`。
 - 唯一 Agent 状态账本：root `docs/agent/`。
 - 子仓 `PLAN.md` 只能作为 backlog / archive / 局部草案，不得声明当前任务源。
-- 已完成任务：手机端作业提交页相册选择与上传修复。
+- 已完成任务：手机端作业提交页相册选择与上传修复，0.0.62 真机确认上传和提交成功。
 - 实现：`NativeCapabilityService` 统一 native bridge / 权限入口；`HomeworkImagePickerService` 封装 Web input 与 Android 系统相册选择；`MainController` 只保留薄调用。
-- 上传兼容：Android native 缺少 `FormData` 时，客户端手工 multipart fallback，通过 XHR 上传 `/homeworks/uploads`。
-- 验证：TypeScript 已通过；Android 已重新构建；staging `0.0.62` 已上传；真机日志确认相册选择、图片上传、作业提交、奖励发放和库存同步成功。
+- 二次加固：新增 `HomeworkImageUploadService`，上传策略从 `ApiClient` 移出；`PickedHomeworkImage` 显式区分 Web file 与 Android native bytes；Android 相册权限改为真实 runtime permission。
+- 当前验证：TypeScript 已通过；二次加固已推送到 `buddy-client/develop`。
+- 当前待办：必须重新构建 Android APK，让 `AndroidManifest.xml` 和 `AppActivity.java` 生效；随后上传 staging `0.0.63` 并真机验证首次相册权限弹窗。
 - 历史事实：手机端“点击登录”闪崩已完成；根因与美术调参页有关，渲染时排除美术调参页后不再闪崩。
 
 ## 2026-06-17 - 手机端作业提交页相册选择修复
