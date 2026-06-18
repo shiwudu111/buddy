@@ -10,7 +10,8 @@
 - 实现：`NativeCapabilityService` 统一 native bridge / 权限入口；`HomeworkImagePickerService` 封装 Web input 与 Android 系统相册选择；`MainController` 只保留薄调用。
 - 二次加固：新增 `HomeworkImageUploadService`，上传策略从 `ApiClient` 移出；`PickedHomeworkImage` 显式区分 Web file 与 Android native bytes；Android 相册权限改为真实 runtime permission。
 - 当前验证：TypeScript 已通过；二次加固已推送到 `buddy-client/develop`。
-- 当前待办：必须重新构建 Android APK，让 `AndroidManifest.xml` 和 `AppActivity.java` 生效；随后上传 staging `0.0.63` 并真机验证首次相册权限弹窗。
+- server 修复：`/homeworks/dev/reset-today` 已改为 production 默认禁用、`ENABLE_DEV_HOMEWORK_RESET=true` 显式启用，提交已推送到 `buddy-server/deploy/cloud-staging-v1`。
+- 当前待办：必须重新构建 Android APK，让 `AndroidManifest.xml` 和 `AppActivity.java` 生效；随后上传 staging `0.0.63` 并真机验证首次相册权限弹窗；云端 server 需要部署最新 `deploy/cloud-staging-v1` 并设置 `ENABLE_DEV_HOMEWORK_RESET=true`。
 - 历史事实：手机端“点击登录”闪崩已完成；根因与美术调参页有关，渲染时排除美术调参页后不再闪崩。
 
 ## 2026-06-17 - 手机端作业提交页相册选择修复

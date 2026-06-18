@@ -29,6 +29,10 @@
   - `HomeworkImagePickerService` 返回结构化 `PickedHomeworkImage`，显式区分 `web` 与 `android-native`。
   - Android native 图片上传直接使用 bytes multipart + XHR，不再先触发不可用的 `FormData`。
   - `photoLibrary` 权限改为真实原生权限请求，首次使用相册前应弹系统授权。
+- 作业开发重置接口 403 已定位：
+  - 云端后端运行在 `NODE_ENV=production`。
+  - 旧逻辑在 production 无条件禁用 `/homeworks/dev/reset-today`。
+  - 已改为 `ENABLE_DEV_HOMEWORK_RESET=true` 显式启用，production 默认仍禁用，避免误开正式环境。
 
 ### Allowed Files
 
@@ -69,3 +73,7 @@ git status -sb
 - 二次加固代码已通过 TypeScript 检查并提交到 `buddy-client/develop`。
 - 仍需重新构建 Android APK；本轮修改了 `AndroidManifest.xml` 与 `AppActivity.java`，仅热更无法带入原生权限声明和 Java 桥。
 - APK 重建后需生成并上传 staging 热更 `0.0.63`，再真机验证权限弹窗与上传提交链路。
+- server 已提交到 `deploy/cloud-staging-v1`：`fix(homework): gate dev reset by explicit flag`。
+- server 单元测试通过：`bun test tests\homework-dev-reset.test.ts`。
+- server 全量 `bun test` 因本地 `localhost:3000` 未启动而失败，非本轮逻辑失败。
+- 云端仍需部署 server 提交，并设置 `ENABLE_DEV_HOMEWORK_RESET=true` 后重启服务。

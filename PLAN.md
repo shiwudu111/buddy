@@ -22,6 +22,8 @@
 - 0.0.62 真机日志已验证：相册可打开，图片上传走 multipart fallback 成功，`POST /homeworks/submit` 成功，奖励与库存同步成功。
 - 二次加固已提交到 `buddy-client/develop`：图片选择结果改为结构化 `PickedHomeworkImage`，上传策略移入 `HomeworkImageUploadService`，`ApiClient` 不再承载 Android 图片上传 fallback。
 - Android 相册权限已改为真实 runtime permission：首次使用相册前通过 `NativeCapabilityService` 请求 `photoLibrary`，原生侧按系统版本请求 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。
+- 作业开发重置接口返回 403 的原因：云端后端运行在 `NODE_ENV=production`，旧逻辑在 production 无条件禁用 `/homeworks/dev/reset-today`。
+- 已在 `buddy-server/deploy/cloud-staging-v1` 提交修复：production 默认仍禁用，但允许通过 `ENABLE_DEV_HOMEWORK_RESET=true` 显式启用 staging/dev 测试重置。
 
 ## Lite Task Packet
 
@@ -76,3 +78,4 @@ Stop Conditions:
 1. 重新构建 Android APK，确保新的 `AndroidManifest.xml` 权限声明和 `AppActivity.java` 权限桥进入安装包。
 2. 基于新构建的 `build/android/data` 生成并上传 staging 热更 `0.0.63`。
 3. 真机验证：首次点选择图片应出现系统相册权限弹窗；允许后应打开相册、上传图片并提交作业成功。
+4. 部署 `buddy-server/deploy/cloud-staging-v1` 到云端，并在 staging 环境设置 `ENABLE_DEV_HOMEWORK_RESET=true` 后重启服务，验证开发重置接口不再返回 403。
