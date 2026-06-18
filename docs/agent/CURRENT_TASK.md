@@ -1,10 +1,10 @@
 # CURRENT TASK
 
-## 2026-06-17 当前任务：手机端作业提交页相册选择修复
+## 2026-06-18 当前任务：无进行中的业务任务
 
 ### 任务目标
 
-修复手机端提交作业页面点击“选择图片”没有效果的问题，让用户可以打开手机相册选择作业照片，并继续通过后端上传接口保存图片 URL。
+上一任务“手机端提交作业页面相册选择与上传修复”已完成并真机验证。等待下一轮任务。
 
 ### 当前事实
 
@@ -16,6 +16,14 @@
 - Android `AppActivity` 已新增系统相册选择桥，优先 `ACTION_PICK`，再 fallback 到 `ACTION_OPEN_DOCUMENT` / `ACTION_GET_CONTENT`。
 - 上传仍走 `/homeworks/uploads`，为后续服务端 / AI 判断图片内容保留后端 URL 链路。
 - 已为后续语音输入预留麦克风权限状态、请求和请求结果查询；本轮不实现录音。
+- 已新增 Android native multipart fallback：当 Cocos 原生环境没有 `FormData` 时，客户端手工拼 multipart body，通过 XHR 上传到 `/homeworks/uploads`。
+- 0.0.62 真机日志确认：
+  - `localHotUpdateVersion=0.0.62`
+  - `remoteVersion=0.0.62`
+  - `homework.imagePicker.native.start`
+  - `api.homeworkUpload.multipart.start`
+  - `api.xhr.request.ok POST /homeworks/uploads status=200`
+  - `main.homework.submit.success`
 
 ### Allowed Files
 
@@ -49,4 +57,6 @@ git status -sb
 ### 验证状态
 
 - TypeScript 检查已通过。
-- Android 完整 APK 构建尚未执行；因为改了 `AppActivity.java`，后续必须重新构建安装 APK 才能真机验证相册选择。
+- Android 已重新构建。
+- staging 热更 `0.0.62` 已上传。
+- 真机已验证相册选择、图片上传、作业提交、奖励发放和库存同步成功。

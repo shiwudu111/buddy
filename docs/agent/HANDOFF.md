@@ -2,13 +2,14 @@
 
 ## Latest Handoff Summary
 
-- 当前任务：手机端作业提交页相册选择修复。
+- 当前任务：无进行中的业务任务。
 - 唯一当前任务源：root `PLAN.md`。
 - 唯一 Agent 状态账本：root `docs/agent/`。
 - 子仓 `PLAN.md` 只能作为 backlog / archive / 局部草案，不得声明当前任务源。
-- 本轮只改 `buddy-client` 图片选择 / 上传输入链路与 root 任务文档，不改后端。
-- 当前实现：`NativeCapabilityService` 统一 native bridge / 权限入口；`HomeworkImagePickerService` 封装 Web input 与 Android 系统相册选择；`MainController` 只保留薄调用。
-- 验证：TypeScript 已通过；Android APK 尚未完整构建，需真机验证相册选择。
+- 已完成任务：手机端作业提交页相册选择与上传修复。
+- 实现：`NativeCapabilityService` 统一 native bridge / 权限入口；`HomeworkImagePickerService` 封装 Web input 与 Android 系统相册选择；`MainController` 只保留薄调用。
+- 上传兼容：Android native 缺少 `FormData` 时，客户端手工 multipart fallback，通过 XHR 上传 `/homeworks/uploads`。
+- 验证：TypeScript 已通过；Android 已重新构建；staging `0.0.62` 已上传；真机日志确认相册选择、图片上传、作业提交、奖励发放和库存同步成功。
 - 历史事实：手机端“点击登录”闪崩已完成；根因与美术调参页有关，渲染时排除美术调参页后不再闪崩。
 
 ## 2026-06-17 - 手机端作业提交页相册选择修复
@@ -37,12 +38,19 @@
 
 - `bunx tsc --noEmit --ignoreDeprecations 6.0` 已通过。
 - UTF-8 检查已覆盖新增/修改 TS 文件。
-- Android 完整 APK 构建尚未执行。
+- Android 已重新构建。
+- staging 热更 `0.0.62` 已上传并确认远端 `version.manifest`。
+- 真机日志确认：
+  - `localHotUpdateVersion=0.0.62`
+  - `remoteVersion=0.0.62`
+  - `homework.imagePicker.native.start`
+  - `api.homeworkUpload.multipart.start`
+  - `api.xhr.request.ok POST /homeworks/uploads status=200`
+  - `main.homework.submit.success`
 
 ### 下一步
 
-- 重新构建并安装 Android APK。
-- 真机验证：点击作业页“选择图片”应打开系统相册；选图后应上传成功并能提交作业。
+- 等待下一轮任务。
 - 如后续接入 AI 判断图片内容，应在后端基于上传后的图片 URL / 文件存储链路扩展，不在客户端离线伪造判断。
 
 ## 2026-06-16 - 文档事实源收编与 Lite Flow 防分裂规则

@@ -2,7 +2,7 @@
 
 ## 当前任务
 
-手机端作业提交页相册选择修复。
+当前无进行中的业务任务。上一任务“手机端作业提交页相册选择修复”已完成。
 
 ## Goal
 
@@ -19,6 +19,7 @@
 - Android 原生环境通过 `AppActivity` 打开系统相册 `ACTION_PICK`，失败时 fallback 到 `ACTION_OPEN_DOCUMENT` / `ACTION_GET_CONTENT`。
 - 图片仍上传到后端 `/homeworks/uploads`，提交作业继续使用后端返回的图片 URL，后续可交给服务端 / AI 判断图片内容。
 - 已为后续语音输入预留麦克风权限查询 / 请求 / 请求结果查询入口，但本轮不实现录音。
+- 0.0.62 真机日志已验证：相册可打开，图片上传走 multipart fallback 成功，`POST /homeworks/submit` 成功，奖励与库存同步成功。
 
 ## Lite Task Packet
 
@@ -59,10 +60,17 @@ Stop Conditions:
 ## 验证状态
 
 - `bunx tsc --noEmit --ignoreDeprecations 6.0` 已通过。
-- Android 完整 APK 构建尚未执行；本轮涉及 `AppActivity.java`，后续必须重新构建并安装 APK 做真机验证。
+- Android 已重新构建。
+- staging 热更已上传并验证远端 `version.manifest` 为 `0.0.62`。
+- 真机日志确认 `local=0.0.62`、`remote=0.0.62`。
+- 真机日志确认上传链路：
+  - 标准 `FormData` 在 Android native 中不可用，日志为 `FormData is not defined`。
+  - multipart fallback 启动：`api.homeworkUpload.multipart.start`。
+  - 上传成功：`api.xhr.request.ok POST /homeworks/uploads status=200`。
+  - 提交成功：`main.homework.submit.success`。
 
 ## 下一步
 
-1. 复查 diff 范围。
-2. 如需收口，提交 `buddy-client` 与 root 文档改动。
-3. 重新构建安装手机 APK，验证点击“选择图片”能打开相册、选图后能上传并提交作业。
+1. 等待下一轮任务。
+2. 若继续扩展作业图片 AI 判断，优先在后端基于上传后的图片 URL / 文件存储链路扩展，不在客户端离线伪造判断。
+3. 若继续做语音输入，复用 `NativeCapabilityService` 权限入口，不要把 Android 反射逻辑散落到页面控制器。
