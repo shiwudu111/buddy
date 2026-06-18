@@ -2,16 +2,18 @@
 
 ## Latest Handoff Summary
 
-- 当前任务：作业图片上传结构稳固化与相册权限授权。
+- 当前任务：登录返回入口与 Log 按钮位置收口。
 - 唯一当前任务源：root `PLAN.md`。
 - 唯一 Agent 状态账本：root `docs/agent/`。
 - 子仓 `PLAN.md` 只能作为 backlog / archive / 局部草案，不得声明当前任务源。
 - 已完成任务：手机端作业提交页相册选择与上传修复，0.0.62 真机确认上传和提交成功。
 - 实现：`NativeCapabilityService` 统一 native bridge / 权限入口；`HomeworkImagePickerService` 封装 Web input 与 Android 系统相册选择；`MainController` 只保留薄调用。
 - 二次加固：新增 `HomeworkImageUploadService`，上传策略从 `ApiClient` 移出；`PickedHomeworkImage` 显式区分 Web file 与 Android native bytes；Android 相册权限改为真实 runtime permission。
-- 当前验证：TypeScript 已通过；二次加固已推送到 `buddy-client/develop`。
+- 大图上传阻塞已关闭：staging `0.0.64` 真机日志确认 Android 原生压缩触发，22,970,577 bytes -> 112,769 bytes，10,097,450 bytes -> 257,211 bytes；`/homeworks/uploads` 与 `/homeworks/submit` 均返回 200。
+- 当前验证：TypeScript 已通过；图片上传压缩修复已提交并推送到 `buddy-client/develop`：`3d19599 fix(homework): compress uploaded images`。
 - server 修复：`/homeworks/dev/reset-today` 已改为 production 默认禁用、`ENABLE_DEV_HOMEWORK_RESET=true` 显式启用，提交已推送到 `buddy-server/deploy/cloud-staging-v1`。
-- 当前待办：必须重新构建 Android APK，让 `AndroidManifest.xml` 和 `AppActivity.java` 生效；随后上传 staging `0.0.63` 并真机验证首次相册权限弹窗；云端 server 需要部署最新 `deploy/cloud-staging-v1` 并设置 `ENABLE_DEV_HOMEWORK_RESET=true`。
+- WSL 同步：用户已明确跳过。
+- 当前待办：修复“没有返回登录界面接口”；将手机端 `Log` 按钮下移，避免挡住左上角图标。
 - 历史事实：手机端“点击登录”闪崩已完成；根因与美术调参页有关，渲染时排除美术调参页后不再闪崩。
 
 ## 2026-06-17 - 手机端作业提交页相册选择修复

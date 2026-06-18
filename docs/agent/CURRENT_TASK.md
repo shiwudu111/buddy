@@ -1,52 +1,41 @@
 # CURRENT TASK
 
-## 2026-06-18 当前任务：作业图片上传结构稳固化与相册权限授权
+## 2026-06-18 当前任务：登录返回入口与 Log 按钮位置收口
 
-### 任务目标
+### 已关闭阻塞
 
-在 0.0.62 已验证相册选择、上传、提交成功的基础上，继续加固图片上传结构，并补齐 Android 首次访问相册的人工授权流程。
+手机端作业图片上传 HTTP 413 已验收通过。
+
+- `buddy-client` 提交：`3d19599 fix(homework): compress uploaded images`
+- 已推送：`develop`
+- 热更：staging `0.0.64`
+- 真机验证：
+  - `local=0.0.64`
+  - `remote=0.0.64`
+  - `failed=0`
+  - Android 原生压缩触发两次
+  - `/homeworks/uploads status=200`
+  - `/homeworks/submit status=200`
+- 用户已明确：跳过 WSL 同步。
+
+### 当前目标
+
+1. 修复“没有返回登录界面接口”。
+2. 将手机端 `Log` 按钮下移，避免挡住左上角图标。
 
 ### 当前事实
 
-- 本轮只修改 `buddy-client` 与 root 任务文档。
-- 原问题原因：作业图片选择只走 Web DOM `<input type=file>`，原生手机包没有 DOM。
-- 已新增 `HomeworkImagePickerService`，封装 Web / Android 原生图片选择。
-- 已新增 `NativeCapabilityService`，统一封装 native bridge 与权限查询 / 请求入口。
-- `MainController` 只保留薄调用，不承载 Android 桥接和 base64 解码细节。
-- Android `AppActivity` 已新增系统相册选择桥，优先 `ACTION_PICK`，再 fallback 到 `ACTION_OPEN_DOCUMENT` / `ACTION_GET_CONTENT`。
-- 上传仍走 `/homeworks/uploads`，为后续服务端 / AI 判断图片内容保留后端 URL 链路。
-- 已为后续语音输入预留麦克风权限状态、请求和请求结果查询；本轮不实现录音。
-- 已新增 Android native multipart fallback：当 Cocos 原生环境没有 `FormData` 时，客户端手工拼 multipart body，通过 XHR 上传到 `/homeworks/uploads`。
-- 0.0.62 真机日志确认：
-  - `localHotUpdateVersion=0.0.62`
-  - `remoteVersion=0.0.62`
-  - `homework.imagePicker.native.start`
-  - `api.homeworkUpload.multipart.start`
-  - `api.xhr.request.ok POST /homeworks/uploads status=200`
-  - `main.homework.submit.success`
-- 二次加固：
-  - 新增 `HomeworkImageUploadService`，图片上传策略从 `ApiClient` 移出。
-  - `HomeworkImagePickerService` 返回结构化 `PickedHomeworkImage`，显式区分 `web` 与 `android-native`。
-  - Android native 图片上传直接使用 bytes multipart + XHR，不再先触发不可用的 `FormData`。
-  - `photoLibrary` 权限改为真实原生权限请求，首次使用相册前应弹系统授权。
-- 作业开发重置接口 403 已定位：
-  - 云端后端运行在 `NODE_ENV=production`。
-  - 旧逻辑在 production 无条件禁用 `/homeworks/dev/reset-today`。
-  - 已改为 `ENABLE_DEV_HOMEWORK_RESET=true` 显式启用，production 默认仍禁用，避免误开正式环境。
+- 三仓在进入本任务前均为干净状态。
+- 本任务优先只改 `buddy-client` 与 root 文档。
+- 暂不修改 `buddy-server`，除非定位确认确实缺服务端接口。
+- 不继续修改作业图片上传链路。
 
 ### Allowed Files
 
-- `buddy-client/assets/scripts/services/HomeworkImagePickerService.ts`
-- `buddy-client/assets/scripts/services/HomeworkImagePickerService.ts.meta`
-- `buddy-client/assets/scripts/services/NativeCapabilityService.ts`
-- `buddy-client/assets/scripts/services/NativeCapabilityService.ts.meta`
-- `buddy-client/assets/scripts/services/HomeworkImageUploadService.ts`
-- `buddy-client/assets/scripts/services/HomeworkImageUploadService.ts.meta`
-- `buddy-client/assets/scripts/network/ApiClient.ts`
-- `buddy-client/assets/scripts/ui/homework/HomeworkCenterCoordinator.ts`
-- `buddy-client/assets/scripts/ui/main/MainController.ts`
-- `buddy-client/native/engine/android/app/AndroidManifest.xml`
-- `buddy-client/native/engine/android/app/src/com/cocos/game/AppActivity.java`
+- `buddy-client/assets/scripts/ui/**`
+- `buddy-client/assets/scripts/app/**`
+- `buddy-client/assets/scripts/services/**`
+- `buddy-client/assets/scripts/network/**`
 - `PLAN.md`
 - `docs/agent/CURRENT_TASK.md`
 - `docs/agent/HANDOFF.md`
@@ -66,14 +55,8 @@ git status -sb
 - `E:\buddy\buddy-client`
 - `E:\buddy\buddy-server`
 
-### 验证状态
+### 注意事项
 
-- TypeScript 检查已通过。
-- 0.0.62 真机已验证相册选择、图片上传、作业提交、奖励发放和库存同步成功。
-- 二次加固代码已通过 TypeScript 检查并提交到 `buddy-client/develop`。
-- 仍需重新构建 Android APK；本轮修改了 `AndroidManifest.xml` 与 `AppActivity.java`，仅热更无法带入原生权限声明和 Java 桥。
-- APK 重建后需生成并上传 staging 热更 `0.0.63`，再真机验证权限弹窗与上传提交链路。
-- server 已提交到 `deploy/cloud-staging-v1`：`fix(homework): gate dev reset by explicit flag`。
-- server 单元测试通过：`bun test tests\homework-dev-reset.test.ts`。
-- server 全量 `bun test` 因本地 `localhost:3000` 未启动而失败，非本轮逻辑失败。
-- 云端仍需部署 server 提交，并设置 `ENABLE_DEV_HOMEWORK_RESET=true` 后重启服务。
+- 返回登录界面要先查现有登录态、token/session、启动页切换逻辑。
+- 如果只是客户端缺入口，不新增后端接口。
+- `Log` 按钮只调整位置，不改变日志功能。

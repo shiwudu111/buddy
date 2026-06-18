@@ -2,80 +2,61 @@
 
 ## 当前任务
 
-手机端作业图片上传结构稳固化与相册权限授权。
+图片上传阻塞已关闭；下一步处理两个客户端收口问题。
 
-## Goal
+## 已关闭阻塞
 
-修复手机端提交作业页面点击“选择图片”没有效果的问题，让用户可以像普通 App 一样打开手机相册，选择作业照片并上传到后端。
+### 手机端作业图片上传 HTTP 413
 
-## 当前事实
+- 结论：已验收通过。
+- 最新提交：`buddy-client` `3d19599 fix(homework): compress uploaded images`，已推送 `develop`。
+- 热更验证：staging `0.0.64` 已生效，真机日志显示 `local=0.0.64`、`remote=0.0.64`、`failed=0`。
+- 原生压缩已触发：
+  - `22,970,577` bytes -> `112,769` bytes
+  - `10,097,450` bytes -> `257,211` bytes
+- 上传与提交已通过：
+  - `/homeworks/uploads status=200`
+  - `/homeworks/submit status=200`
+- 本轮未修改 `buddy-server`。
+- WSL 同步按用户指令跳过。
 
-- 三仓 State Refresh 时均为干净状态。
-- 本轮只修改 `buddy-client`，不修改 `buddy-server`。
-- 原问题原因：作业图片选择只走 Web DOM `<input type=file>`，原生手机包没有 DOM，因此点击后无有效相册入口。
-- 新方案：客户端通过独立 `HomeworkImagePickerService` 选择图片。
-- 原生能力通过 `NativeCapabilityService` 统一调用，避免页面控制器直接散落 native bridge。
-- Web 环境继续使用 `<input type=file>`。
-- Android 原生环境通过 `AppActivity` 打开系统相册 `ACTION_PICK`，失败时 fallback 到 `ACTION_OPEN_DOCUMENT` / `ACTION_GET_CONTENT`。
-- 图片仍上传到后端 `/homeworks/uploads`，提交作业继续使用后端返回的图片 URL，后续可交给服务端 / AI 判断图片内容。
-- 已为后续语音输入预留麦克风权限查询 / 请求 / 请求结果查询入口，但本轮不实现录音。
-- 0.0.62 真机日志已验证：相册可打开，图片上传走 multipart fallback 成功，`POST /homeworks/submit` 成功，奖励与库存同步成功。
-- 二次加固已提交到 `buddy-client/develop`：图片选择结果改为结构化 `PickedHomeworkImage`，上传策略移入 `HomeworkImageUploadService`，`ApiClient` 不再承载 Android 图片上传 fallback。
-- Android 相册权限已改为真实 runtime permission：首次使用相册前通过 `NativeCapabilityService` 请求 `photoLibrary`，原生侧按系统版本请求 `READ_MEDIA_IMAGES` 或 `READ_EXTERNAL_STORAGE`。
-- 作业开发重置接口返回 403 的原因：云端后端运行在 `NODE_ENV=production`，旧逻辑在 production 无条件禁用 `/homeworks/dev/reset-today`。
-- 已在 `buddy-server/deploy/cloud-staging-v1` 提交修复：production 默认仍禁用，但允许通过 `ENABLE_DEV_HOMEWORK_RESET=true` 显式启用 staging/dev 测试重置。
+## 当前待处理
+
+1. 修复“没有返回登录界面接口”。
+2. 调整手机端 `Log` 按钮位置，避免挡住左上角图标。
 
 ## Lite Task Packet
 
 ```text
-Task: 手机端作业提交页相册选择修复
-Scope: buddy-client 作业图片选择、上传输入、Android 相册桥
+Task: 登录返回接口与 Log 按钮位置收口
+Goal: 补齐返回登录界面的客户端入口，并调整手机端 Log 按钮位置
+Repos: buddy-client
 Allowed Files:
-  buddy-client/assets/scripts/services/HomeworkImagePickerService.ts
-  buddy-client/assets/scripts/services/HomeworkImagePickerService.ts.meta
-  buddy-client/assets/scripts/services/NativeCapabilityService.ts
-  buddy-client/assets/scripts/services/NativeCapabilityService.ts.meta
-  buddy-client/assets/scripts/network/ApiClient.ts
-  buddy-client/assets/scripts/ui/homework/HomeworkCenterCoordinator.ts
-  buddy-client/assets/scripts/ui/main/MainController.ts
-  buddy-client/native/engine/android/app/src/com/cocos/game/AppActivity.java
+  buddy-client/assets/scripts/ui/**
+  buddy-client/assets/scripts/app/**
+  buddy-client/assets/scripts/services/**
+  buddy-client/assets/scripts/network/**
   PLAN.md
   docs/agent/CURRENT_TASK.md
   docs/agent/HANDOFF.md
+Out of Scope:
+  buddy-server
+  作业上传链路
+  宠物状态、库存、奖励规则
+  .tmp/
+Backend Impact: 无，除非定位发现确实缺服务端登出接口
+Client Impact: 登录状态/界面跳转与 Log 按钮布局
+Contract Impact: 暂无
 Validation:
   buddy-client: bunx tsc --noEmit --ignoreDeprecations 6.0
-  buddy-client: git diff --stat
   root/client/server: git status -sb
-Stop Conditions:
-  需要修改后端上传契约
-  需要新增 Android 权限或 Gradle 配置
-  TypeScript 检查失败
-  发现 MainController 继续承载大段图片选择逻辑
+Commit Plan: client 与 root 分仓提交
+Risks:
+  需要先确认现有登录/登出状态流，避免只做 UI 跳转但残留 token/session
 ```
 
-## Out of Scope
+## 验证要求
 
-- 不修改后端。
-- 不改变作业奖励、库存、宠物状态规则。
-- 不伪造作业图片或库存。
-- 不提交 `.tmp/`。
-- 不处理无关 UI 重构。
-
-## 验证状态
-
-- `bunx tsc --noEmit --ignoreDeprecations 6.0` 已通过。
-- Android 已重新构建。
-- staging 热更已上传并验证远端 `version.manifest` 为 `0.0.62`。
-- 真机日志确认 `local=0.0.62`、`remote=0.0.62`。
-- 真机日志确认上传链路：
-  - 标准 `FormData` 在 Android native 中不可用，日志为 `FormData is not defined`。
-  - multipart fallback 启动：`api.homeworkUpload.multipart.start`。
-  - 上传成功：`api.xhr.request.ok POST /homeworks/uploads status=200`。
-  - 提交成功：`main.homework.submit.success`。
-
-## 下一步
-
-1. 重新构建 Android APK，确保新的 `AndroidManifest.xml` 权限声明和 `AppActivity.java` 权限桥进入安装包。
-2. 基于新构建的 `build/android/data` 生成并上传 staging 热更 `0.0.63`。
-3. 真机验证：首次点选择图片应出现系统相册权限弹窗；允许后应打开相册、上传图片并提交作业成功。
-4. 部署 `buddy-server/deploy/cloud-staging-v1` 到云端，并在 staging 环境设置 `ENABLE_DEV_HOMEWORK_RESET=true` 后重启服务，验证开发重置接口不再返回 403。
+- 修改前先定位现有登录状态、启动页、返回首页/登录页逻辑。
+- 如只是缺客户端入口，不新增后端接口。
+- Log 按钮只做位置调整，不改变日志功能。
